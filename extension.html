@@ -974,7 +974,46 @@
   </main>
 
   <script src="license.js"></script>
-  <script src="popup.js"></script>
-</body>
+  <script src="extension.js"></script>
 
+  <!-- Modal do QR Code injetado -->
+  <div id="qrModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.95); z-index:99999; justify-content:center; align-items:center; flex-direction:column; color:white;">
+    <h2 style="color:#25d366; margin-bottom:20px; font-family: 'Inter', sans-serif;">Aguardando Conexão...</h2>
+    <div style="background:white; padding:20px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+      <img id="qrImg" src="" style="width:250px; height:250px; display:none;" />
+      <div id="qrLoader" style="color:black; text-align:center; padding:50px;">Gerando QR Code...</div>
+    </div>
+    <p style="margin-top:20px; font-size:14px; color:#94a3b8; font-family: 'Inter', sans-serif;">Abra o WhatsApp no celular e escaneie o código</p>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const qrModal = document.getElementById('qrModal');
+    const qrImg = document.getElementById('qrImg');
+    const qrLoader = document.getElementById('qrLoader');
+    const connTxt = document.getElementById('connTxt');
+    const connBadge = document.getElementById('connBadge');
+
+    socket.on('qr_code', (img) => {
+      qrModal.style.display = 'flex';
+      qrImg.src = img;
+      qrImg.style.display = 'block';
+      qrLoader.style.display = 'none';
+      connTxt.innerText = 'Aguardando QR Code';
+      connBadge.className = 'status-badge offline';
+    });
+
+    socket.on('session_status', (s) => {
+      if (s === 'isLogged' || s === 'inChat' || s === 'CONNECTED') {
+        qrModal.style.display = 'none';
+        connTxt.innerText = 'Online';
+        connBadge.className = 'status-badge online';
+      } else {
+        connTxt.innerText = s;
+        connBadge.className = 'status-badge offline';
+      }
+    });
+  </script>
+</body>
 </html>
