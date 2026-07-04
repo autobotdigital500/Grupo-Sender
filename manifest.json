@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "Group Sender",
+  "version": "3.0.1",
+  "description": "Envio inteligente para grupos do WhatsApp Web.",
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "alarms",
+    "scripting",
+    "tabs",
+    "sidePanel",
+    "webNavigation"
+  ],
+  "host_permissions": [
+    "*://*.whatsapp.com/*",
+    "https://connect.centraloficial2.com.br/*",
+    "https://html.duckduckgo.com/*",
+    "*://*.google.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "side_panel": {
+    "default_path": "popup.html"
+  },
+  "action": {
+    "default_title": "Abrir Group Sender",
+    "default_icon": "logo.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "wppconnect-wa.js",
+        "automation-listener.js"
+      ],
+      "matches": [
+        "https://web.whatsapp.com/*"
+      ]
+    }
+  ],
+  "icons": {
+    "16": "logo.png",
+    "48": "logo.png",
+    "128": "logo.png"
+  }
+}
