@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Group Sender - Dashboard</title>
+  <style>
+    body { font-family: sans-serif; background: #0f172a; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+    #qr-container { background: white; padding: 20px; border-radius: 10px; margin-top: 20px; }
+    h1 { color: #25d366; }
+    .status { margin-top: 20px; padding: 10px; border-radius: 5px; }
+    .status.connected { background: #166534; }
+    .status.disconnected { background: #991b1b; }
+  </style>
+</head>
+<body>
+  <h1>Group Sender Bot</h1>
+  <div id="status" class="status disconnected">Aguardando Conexão...</div>
+  <div id="qr-container" style="display: none;">
+    <img id="qr-code" src="" alt="QR Code" />
+    <p style="color: black; text-align: center;">Escaneie o QR Code</p>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const qrContainer = document.getElementById('qr-container');
+    const qrImage = document.getElementById('qr-code');
+    const statusDiv = document.getElementById('status');
+
+    socket.on('qr_code', (base64Img) => {
+      qrImage.src = base64Img;
+      qrContainer.style.display = 'block';
+      statusDiv.innerText = 'Escaneie o QR Code no WhatsApp';
+      statusDiv.className = 'status disconnected';
+    });
+
+    socket.on('session_status', (status) => {
+      console.log('Status:', status);
+      if (status === 'isLogged' || status === 'inChat' || status === 'CONNECTED') {
+        qrContainer.style.display = 'none';
+        statusDiv.innerText = 'Bot Conectado e Rodando!';
+        statusDiv.className = 'status connected';
+      } else {
+        statusDiv.innerText = 'Desconectado (' + status + ')';
+        statusDiv.className = 'status disconnected';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Group Sender CRM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <header>
+    <div class="logo-area">
+      <img src="logo.png" alt="Logo" class="main-logo">
+      <h1>Group Sender</h1>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <div id="connBadge" class="status-badge offline">
+        <div class="dot"></div>
+        <span id="connTxt">Offline</span>
+      </div>
+      <button id="btnPopOut" class="btn btn-outline" style="padding: 4px 8px; font-size: 12px; border-color: var(--primary); color: var(--primary); display: flex; align-items: center; justify-content: center;" title="Abrir em Janela Flutuante">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <line x1="10" y1="14" x2="21" y2="3"></line>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <nav>
+    <button class="tab active" data-tab="send">
+      <svg viewBox="0 0 24 24">
+        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+      </svg>
+      Campanha
+    </button>
+    <button class="tab" data-tab="groups">
+      <svg viewBox="0 0 24 24">
+        <path
+          d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+      </svg>
+      Grupos
+    </button>
+    <button class="tab" data-tab="poll">
+      <svg viewBox="0 0 24 24">
+        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" />
+      </svg>
+      Enquetes
+    </button>
+    <button class="tab" data-tab="config">
+      <svg viewBox="0 0 24 24">
+        <path
+          d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
+      </svg>
+      Ajustes
+    </button>
+    <button class="tab" data-tab="gerenciar">
+      <svg viewBox="0 0 24 24">
+        <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+      </svg>
+      Gerenciar Grupo
+    </button>
+
+    <button class="tab" data-tab="status">
+      <svg viewBox="0 0 24 24">
+        <path
+          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" />
+      </svg>
+      Status
+    </button>
+
+    <button class="tab" data-tab="extract">
+      <svg viewBox="0 0 24 24">
+        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+      </svg>
+      Extrair
+    </button>
+    <button class="tab" data-tab="join">
+      <svg viewBox="0 0 24 24">
+        <path d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
+      </svg>
+      Auto-Join
+    </button>
+    <button class="tab" data-tab="templates">
+      <svg viewBox="0 0 24 24">
+        <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/>
+      </svg>
+      Modelos
+    </button>
+    <button class="tab" data-tab="verifier">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" />
+      </svg>
+      Verificador
+    </button>
+    <button class="tab" data-tab="add-members">
+      <svg viewBox="0 0 24 24">
+        <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+      </svg>
+      Adic. Membros
+    </button>
+    <button class="tab" data-tab="autoresposta">
+      <svg viewBox="0 0 24 24">
+        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+      </svg>
+      Auto-Resposta
+    </button>
+  </nav>
+
+  <main>
+    <!-- ABA: CAMPANHA -->
+    <div id="p-send" class="panel active">
+      <div class="card">
+        <div class="card-title" style="display:flex; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <svg viewBox="0 0 24 24" style="width:18px; fill:var(--primary);"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+          Mensagem
+        </div>
+        <div style="display:flex; gap:5px; align-items:center;">
+          <div id="variationTabs" style="display:flex; gap:5px;">
+            <button class="v-tab active" data-v="0">V1</button>
+          </div>
+          <button id="btnRemoveVariation" class="v-tab" style="background:var(--bg3); color:var(--error); display:none;">-</button>
+          <button id="btnAddVariation" class="v-tab" style="background:var(--bg3); color:var(--primary);">+</button>
+        </div>
+      </div>
+      
+      <div id="variationContainer">
+        <div class="input-group" style="position:relative;">
+          <textarea id="mainMessage" placeholder="Sua mensagem aqui... Use {nome_group} para personalizar." style="min-height:150px;"></textarea>
+          <div class="char-count" id="charCount">0/4096</div>
+          
+          <div style="display:flex; gap:5px; margin-top:8px;">
+            <button class="btn-tag" data-tag="{nome_grupo}">{nome_grupo}</button>
+            <button class="btn-tag" data-tag="{data}">{data}</button>
+            <button class="btn-tag" data-tag="@everyone" style="background:var(--primary); color:white;">@everyone</button>
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="toggle-row">
+          <span class="label">Mencionar membros do grupo</span>
+          <label class="switch">
+            <input type="checkbox" id="mentionMembersToggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- AGENDAMENTO -->
+        <div class="card" style="border: 1px dashed var(--primary); background: rgba(37, 211, 102, 0.05); margin-top:10px;">
+          <div class="toggle-row">
+            <span class="label" style="color:var(--primary); font-weight:bold;">Agendamento 24h (Ciclo)</span>
+            <label class="switch">
+              <input type="checkbox" id="repeatCampaignToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div id="repeatConfig" style="display:none; margin-top:10px;">
+            <div class="toggle-row">
+              <span class="label" style="font-size:11px;">Repetir a cada (minutos):</span>
+              <input type="number" id="repeatInterval" value="60" min="1" style="width:60px; background:var(--bg3); color:var(--txt1); border:1px solid var(--primary); border-radius:4px; font-size:11px; padding:4px;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MÍDIA -->
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+          </svg>
+          Mídia (Opcional)
+        </div>
+        <div id="mediaArea">
+          <div id="btnSelectMedia" class="media-empty">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+            </svg>
+            Anexar Fotos, Vídeos ou Docs
+          </div>
+          <div id="mediaPreviewContainer" style="display:none; flex-direction:column; gap:5px; max-height:150px; overflow-y:auto; padding-right:5px;">
+            <!-- Previews dinâmicos aqui -->
+          </div>
+          <button id="btnAddMoreMedia" class="btn btn-outline" style="display:none; margin-top:5px; font-size:11px; padding:4px;">+ Adicionar mais arquivos</button>
+          <input type="file" id="fileInput" style="display:none" accept="image/*,video/*,audio/*,application/*" multiple>
+        </div>
+      </div>
+
+      <div class="card">
+        <div id="campaignStatus" style="display:none">
+          <div class="prog-container">
+            <div class="prog-stats">
+              <span id="progCount">0/0</span>
+              <span id="methodTxt" style="color:var(--primary)">via Store-API</span>
+            </div>
+            <div class="prog-bar-bg">
+              <div id="progBar" class="prog-bar-fill"></div>
+            </div>
+          </div>
+        </div>
+        <button id="btnStart" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" width="18">
+            <path d="M8 5v14l11-7z" fill="currentColor" />
+          </svg>
+          Iniciar Campanha
+        </button>
+        <div id="campaignControls" class="row" style="display:none">
+          <button id="btnPause" class="btn btn-outline" style="flex:1">Pausar</button>
+          <button id="btnStop" class="btn btn-stop" style="flex:1">Parar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA: GRUPOS -->
+    <div id="p-groups" class="panel">
+      <div class="card">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+          </svg>
+          <input type="text" id="groupSearch" placeholder="Buscar grupos...">
+        </div>
+        <div class="row" style="margin-bottom:10px">
+          <button id="btnRefreshGroups" class="btn btn-outline" style="padding:6px; font-size:11px;">Atualizar
+            Lista</button>
+          <button id="btnSelectAll" class="btn btn-outline" style="padding:6px; font-size:11px;">Selecionar
+            Todos</button>
+          <button id="btnClearSelection" class="btn btn-outline"
+            style="padding:6px; font-size:11px; border-color:var(--error); color:var(--error);">Limpar</button>
+        </div>
+        <div id="groupList" class="group-list">
+          <div style="padding:20px; text-align:center; color:var(--txt2); font-size:12px;">Nenhum grupo carregado.</div>
+        </div>
+
+        <!-- AÃ‡Ã•ES EM MASSA -->
+        <div class="card" style="margin-top:20px; border-color:var(--primary); background:rgba(37,211,102,0.02)">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+            </svg>
+            Ações em Massa (Perfil)
+          </div>
+          <div class="input-group">
+            <span class="label">Novo Nome dos Grupos</span>
+            <input type="text" id="massGroupName" placeholder="Deixe vazio para não mudar">
+          </div>
+          <div class="input-group">
+            <span class="label">Nova Descrição</span>
+            <textarea id="massGroupDesc" placeholder="Deixe vazio para não mudar" style="min-height:60px;"></textarea>
+          </div>
+          <div class="input-group">
+            <span class="label">Nova Foto (Opcional)</span>
+            <div id="btnSelectMassIcon" class="media-empty" style="padding:6px; font-size:10px;">
+              Selecionar Foto do Perfil
+            </div>
+            <input type="file" id="massIconInput" style="display:none" accept="image/*">
+            <div id="massIconPreview" style="display:none; align-items:center; gap:10px; margin-top:5px;">
+              <img id="massIconImg" src="" style="width:30px; height:30px; border-radius:50%; object-fit:cover;">
+              <span id="btnRemoveMassIcon" style="color:var(--error); cursor:pointer; font-size:10px;">Remover</span>
+            </div>
+          </div>
+          <button id="btnApplyMassAction" class="btn btn-outline"
+            style="border-color:var(--primary); color:var(--primary); margin-top:10px;">
+            Aplicar nos Selecionados
+          </button>
+        </div>
+
+        <!-- CONTROLE DE GRUPOS ADMIN -->
+        <div class="card" style="margin-top:10px; border-color:var(--primary); background:rgba(37,211,102,0.02)">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" style="fill:currentColor; width:18px; margin-right:5px;">
+              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" />
+            </svg>
+            Controle de Grupos (Admin)
+          </div>
+          <div style="font-size:11px; color:var(--txt2); margin-bottom:10px;">Aplicar ação nos grupos selecionados:</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <button id="btnOpenGroups" class="btn btn-outline" style="border-color:var(--primary); color:var(--primary);">🔓 Abrir Grupos</button>
+            <button id="btnCloseGroups" class="btn btn-outline" style="border-color:var(--error); color:var(--error);">🔒 Fechar Grupos</button>
+            <button id="btnGetGroupLinks" class="btn btn-outline" style="border-color:var(--primary); color:var(--primary);">🔗 Obter Links</button>
+            <button id="btnLeaveGroups" class="btn btn-outline" style="border-color:var(--error); color:var(--error);">🚪 Sair dos Grupos</button>
+          </div>
+          <button id="btnClearChatGroups" class="btn btn-outline" style="width:100%; margin-top:10px; border-color:var(--txt2); color:var(--txt2);">🗑️ Limpar Histórico do Chat</button>
+          <div id="adminActionStatus" style="margin-top:10px; font-size:11px; text-align:center;"></div>
+        </div>
+
+        <!-- GERENCIAR PARTICIPANTES -->
+        <div class="card" style="margin-top:10px; border-color:var(--primary); background:rgba(37,211,102,0.02)">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" style="fill:currentColor; width:18px; margin-right:5px;">
+              <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+            </svg>
+            Gerenciar Participantes
+          </div>
+          <div style="font-size:11px; color:var(--txt2); margin-bottom:10px;">Aplicar nos grupos selecionados:</div>
+          
+          <div class="input-group">
+            <span class="label">Número do Alvo (com DDI + DDD)</span>
+            <input type="text" id="targetParticipant" placeholder="Ex: 5511999999999" style="background:var(--bg3); border:1px solid var(--brd); color:var(--txt); padding:8px; border-radius:6px; font-size:12px; width:100%;">
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; margin-top:10px;">
+            <button id="btnPromote" class="btn btn-outline" style="border-color:var(--primary); color:var(--primary); font-size:10px; padding:6px;">â¬† Promover</button>
+            <button id="btnDemote" class="btn btn-outline" style="border-color:#ffb300; color:#ffb300; font-size:10px; padding:6px;">â¬‡ Rebaixar</button>
+            <button id="btnBan" class="btn btn-outline" style="border-color:var(--error); color:var(--error); font-size:10px; padding:6px;">âŒ Banir</button>
+          </div>
+          <div id="participantActionStatus" style="margin-top:10px; font-size:11px; text-align:center;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA: CONFIG -->
+    <div id="p-config" class="panel">
+
+      <div class="card" style="border-color:var(--primary); background:rgba(37,211,102,0.02)">
+        <div class="card-title">Aparência e Cores</div>
+        
+        <div class="toggle-row">
+          <span class="label">Modo Escuro (Dark Mode)</span>
+          <label class="switch">
+            <input type="checkbox" id="cfgDarkMode">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="input-group" style="margin-top:10px;">
+          <span class="label">Cor Principal da Ferramenta</span>
+          <select id="cfgThemeColor" style="background:var(--bg3); color:var(--txt); border:1px solid var(--brd); padding:8px; border-radius:6px; outline:none; width:100%;">
+            <option value="#25d366">Verde (Padrão WhatsApp)</option>
+            <option value="#0088cc">Azul</option>
+            <option value="#ff3366">Rosa</option>
+            <option value="#8a2be2">Roxo</option>
+            <option value="#ffb300">Amarelo</option>
+            <option value="#ffffff">Branco (Preto no modo claro)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Delays (Segundos)</div>
+        <div class="row">
+          <div class="col">
+            <span class="label">Mínimo</span>
+            <input type="number" id="cfgDelayMin" value="15">
+          </div>
+          <div class="col">
+            <span class="label">Máximo</span>
+            <input type="number" id="cfgDelayMax" value="45">
+          </div>
+        </div>
+        <div class="input-group">
+          <span class="label">Limite Diário</span>
+          <input type="number" id="cfgLimit" value="50">
+        </div>
+        <div class="input-group">
+          <span class="label">Máximo de Menções por Grupo</span>
+          <input type="number" id="cfgMentionLimit" value="20">
+        </div>
+        <div class="input-group">
+          <span class="label">Assinatura das Mensagens (Rodapé)</span>
+          <div style="display:flex; gap:4px; margin-bottom:5px;">
+            <button type="button" id="btnSigBold" title="Negrito" style="background:var(--bg3); color:var(--txt); border:1px solid var(--brd); border-radius:4px; padding:3px 8px; font-size:13px; font-weight:bold; cursor:pointer; line-height:1;">B</button>
+            <button type="button" id="btnSigItalic" title="Itálico" style="background:var(--bg3); color:var(--txt); border:1px solid var(--brd); border-radius:4px; padding:3px 8px; font-size:13px; font-style:italic; cursor:pointer; line-height:1;">I</button>
+            <button type="button" id="btnSigUnderline" title="Sublinhado (usando negrito+itálico no WhatsApp)" style="background:var(--bg3); color:var(--txt); border:1px solid var(--brd); border-radius:4px; padding:3px 8px; font-size:13px; text-decoration:underline; cursor:pointer; line-height:1;">S</button>
+            <span style="font-size:9px; color:var(--txt2); align-self:center; margin-left:4px;">Selecione o texto e clique no formato</span>
+          </div>
+          <textarea id="cfgSignature" placeholder="Ex: *Atenciosamente*, _Equipe CRM_" style="min-height:60px; font-size:11px;"></textarea>
+          <!-- Preview em tempo real -->
+          <div id="sigPreviewWrap" style="display:none; margin-top:6px; background:var(--bg3); border:1px solid var(--brd); border-radius:6px; padding:8px 10px;">
+            <div style="font-size:9px; color:var(--txt2); margin-bottom:4px; text-transform:uppercase; letter-spacing:.5px;">Prévia (como aparece no WhatsApp)</div>
+            <div id="sigPreview" style="font-size:12px; color:var(--txt); white-space:pre-wrap; word-break:break-word; line-height:1.6;"></div>
+          </div>
+        </div>
+        <button id="btnSaveCfg" class="btn btn-primary" style="margin-top:10px">Salvar Ajustes</button>
+      </div>
+    </div>
+
+
+    <!-- ABA: STATUS -->
+    <div id="p-status" class="panel">
+      <div class="card">
+        <div class="card-title">Postar Status com Menção</div>
+        <div class="input-group">
+          <span class="label">Legenda do Status</span>
+          <input type="text" id="statusCaption" placeholder="Legenda opcional...">
+        </div>
+        <div class="input-group">
+          <span class="label">Mídia do Status</span>
+          <div id="btnSelectStatusImg" class="media-empty">Selecionar Fotos/Vídeos</div>
+          <input type="file" id="statusImgInput" style="display:none" accept="image/*,video/*" multiple>
+          <div id="statusImgPreview" style="display:none; flex-direction:column; gap:10px; margin-top:10px;">
+            <div id="statusPreviewList" style="font-size:12px; color:var(--txt1); display:flex; flex-direction:column; gap:5px; max-height:150px; overflow-y:auto; border:1px solid var(--brd); padding:5px; border-radius:4px;"></div>
+            <button id="btnRemoveStatusImg" class="btn btn-outline" style="padding:4px; font-size:10px;">Limpar Seleção</button>
+          </div>
+        </div>
+
+        <!-- Mencionar Membros -->
+        <div class="card" style="border: 1px dashed var(--primary); background: rgba(37, 211, 102, 0.05); margin-top:10px; margin-bottom:10px; padding:10px;">
+          <div class="toggle-row">
+            <span class="label" style="color:var(--primary); font-weight:bold;">Mencionar pessoas específicas no Status</span>
+            <label class="switch">
+              <input type="checkbox" id="statusMentionToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div id="statusMentionInfo" style="display:none; margin-top:8px; font-size:11px; color:var(--txt2); line-height:1.5;">
+            <button id="btnExtractStatusMembers" class="btn btn-outline" style="font-size:11px; padding:6px; width:100%;">1. Extrair contatos dos grupos selecionados</button>
+            <div id="statusMembersList" style="margin-top:10px; max-height:150px; overflow-y:auto; display:none; flex-direction:column; gap:5px; border:1px solid var(--brd); padding:5px; border-radius:4px; background:var(--bg3);">
+              <!-- Lista de contatos aparecerá aqui -->
+            </div>
+            <div id="statusMentionCount" style="color:var(--primary); margin-top:5px; display:block;"></div>
+          </div>
+        </div>
+
+        <!-- Avisar nos Grupos -->
+        <div class="card" style="border: 1px dashed #3b82f6; background: rgba(59,130,246,0.05); margin-top:10px; margin-bottom:10px; padding:10px;">
+          <div class="toggle-row">
+            <span class="label" style="color:#3b82f6; font-weight:bold;">📢 Avisar nos grupos sobre o status</span>
+            <label class="switch">
+              <input type="checkbox" id="statusNotifyGroupsToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div id="statusNotifyGroupsConfig" style="display:none; margin-top:10px;">
+            <span class="label" style="font-size:11px; color:var(--txt2);">Mensagem enviada nos grupos (com @todos automático):</span>
+            <textarea id="statusNotifyMsg" style="width:100%; margin-top:6px; min-height:60px; background:var(--bg3); color:var(--txt1); border:1px solid #3b82f6; border-radius:6px; padding:8px; font-size:11px; resize:vertical;" placeholder="Ex: Acabei de postar um status novo! Vai lá conferir 👆">Acabei de postar um novo status! Vai lá conferir 👆</textarea>
+            <span style="font-size:10px; color:var(--txt2); margin-top:4px; display:block;">Os grupos selecionados na aba <b>Grupos</b> receberão essa mensagem com @todos.</span>
+          </div>
+        </div>
+
+        <!-- Agendamento Status -->
+        <div class="card" style="border: 1px dashed var(--primary); background: rgba(37, 211, 102, 0.05); margin-top:10px; margin-bottom:15px; padding:10px;">
+          <div class="toggle-row">
+            <span class="label" style="color:var(--primary); font-weight:bold;">Repetir Status (Ciclo)</span>
+            <label class="switch">
+              <input type="checkbox" id="repeatStatusToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div id="repeatStatusConfig" style="display:none; margin-top:10px;">
+            <div class="toggle-row">
+              <span class="label" style="font-size:11px;">Repetir a cada (minutos):</span>
+              <input type="number" id="repeatStatusInterval" value="10" min="1" style="width:60px; background:var(--bg3); color:var(--txt1); border:1px solid var(--primary); border-radius:4px; font-size:11px; padding:4px;">
+            </div>
+          </div>
+        </div>
+
+        <div id="statusTaskArea" style="display:none; margin-bottom:15px;">
+          <div class="prog-container">
+            <div class="prog-stats">
+              <span id="statusProgCount"></span>
+              <span id="statusTimerTxt" style="color:var(--primary)">Iniciando...</span>
+            </div>
+            <div class="prog-bar-bg">
+              <div id="statusProgBar" class="prog-bar-fill" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div id="statusActionButtons" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <button id="btnPostStatus" class="btn btn-primary">
+            Postar Status
+          </button>
+          <button id="btnClearStatus" class="btn btn-outline" style="border-color:var(--txt2); color:var(--txt2);">
+            Limpar
+          </button>
+        </div>
+        <button id="btnStopStatus" class="btn btn-stop" style="display:none; margin-top:10px; width:100%;">Parar Ciclo</button>
+        
+        <div id="statusResult" style="margin-top:10px; font-size:11px; text-align:center; min-height:16px;"></div>
+      </div>
+    </div>
+
+    <!-- ABA: ENQUETES -->
+    <div id="p-poll" class="panel">
+      <div class="card">
+        <div class="card-title">Criar Enquete em Massa</div>
+        
+        <div class="input-group">
+          <span class="label">Pergunta da Enquete</span>
+          <textarea id="pollQuestion" placeholder="Ex: Qual o melhor dia para a live?" style="min-height:80px;"></textarea>
+        </div>
+        
+        <div class="input-group">
+          <span class="label">Opções</span>
+          <div id="pollOptionsList" style="display:flex; flex-direction:column; gap:8px;">
+            <div class="row" style="gap:5px;">
+              <input type="text" class="poll-opt" placeholder="Ex: Sim">
+              <button class="btn btn-outline btn-remove-opt" style="padding:0 8px;">âœ•</button>
+            </div>
+            <div class="row" style="gap:5px;">
+              <input type="text" class="poll-opt" placeholder="Ex: Não">
+              <button class="btn btn-outline btn-remove-opt" style="padding:0 8px;">âœ•</button>
+            </div>
+          </div>
+          <button id="btnAddPollOption" class="btn btn-outline" style="margin-top:8px; font-size:10px; padding:4px;">+ Adicionar Opção</button>
+        </div>
+
+        <div class="toggle-row">
+          <span class="label">Permitir múltiplas respostas</span>
+          <label class="switch">
+            <input type="checkbox" id="pollMultiSelect">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="card" style="background:var(--bg3); border:1px dashed var(--primary); padding:10px;">
+          <div id="pollStatusArea" style="display:none; margin-bottom:15px;">
+            <div class="prog-container">
+              <div class="prog-stats">
+                <span id="pollProgCount">0/0</span>
+                <span id="pollTimerTxt" style="color:var(--primary)">Iniciando...</span>
+              </div>
+              <div class="prog-bar-bg">
+                <div id="pollProgBar" class="prog-bar-fill"></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="font-size:11px; color:var(--txt2); margin-bottom:10px;">
+            A enquete será enviada para todos os grupos selecionados na aba <b>Grupos</b>.
+          </div>
+          <button id="btnSendPoll" class="btn btn-primary">Enviar Enquete em Massa</button>
+          <button id="btnStopPoll" class="btn btn-stop" style="display:none; margin-top:10px;">Parar Envio</button>
+        </div>
+
+        <div id="pollResult" style="margin-top:10px; font-size:11px; text-align:center;"></div>
+
+      </div>
+    </div>
+
+    <div id="p-extract" class="panel">
+      <div class="card">
+        <div class="card-title">Extração de Leads</div>
+        
+        <p style="font-size:11px; color:var(--txt2); margin-bottom:15px; padding:0 5px;">
+          Extraia números ou links dos grupos marcados na aba <b>Grupos</b>.
+          <br>
+          <span id="selectedExtractCount" style="color:var(--primary); font-weight:bold; margin-top:4px; display:inline-block;">0 grupos selecionados</span>
+        </p>
+
+        <div class="input-group">
+          <span class="label">Filtro de Extração</span>
+          <select id="extractFilter" style="background:var(--bg2); color:var(--txt); border:1px solid var(--brd); padding:8px; border-radius:6px; outline:none; width:100%;">
+            <option value="all">Todos os Números</option>
+            <option value="unknown">Apenas Não Salvos (Desconhecidos)</option>
+            <option value="saved">Apenas Contatos Salvos</option>
+          </select>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+          <button id="btnStartExtract" class="btn btn-primary">Iniciar Extração</button>
+          <button id="btnExtractLinks" class="btn btn-outline" style="border-color:var(--primary); color:var(--primary);">Extrair Links (Admin)</button>
+        </div>
+        <button id="btnDownloadExtract" class="btn btn-outline" style="display:none; width:100%; margin-top:10px; border-color:var(--primary); color:var(--primary);">Baixar .TXT</button>
+
+
+        <div id="extractResultArea" style="display:none; margin-top:15px; text-align:center;">
+          <div style="font-size:24px; font-weight:800; color:var(--primary);" id="extractCount">0</div>
+          <div style="font-size:10px; color:var(--txt2); text-transform:uppercase;">Números Capturados</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA: AUTO-JOIN -->
+    <div id="p-join" class="panel">
+      <div class="card" style="border-color:var(--primary); background:rgba(37,211,102,0.02); margin-bottom: 10px;">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" style="fill:currentColor; width:18px; margin-right:5px;"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          Pesquisar Grupos na Web
+        </div>
+        <div class="input-group">
+          <span class="label">Palavra-chave (Nicho, Assunto, Cidade)</span>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="webSearchKeyword" placeholder="Ex: Vendas, Marketing, São Paulo" style="flex:1;">
+            <button id="btnWebSearch" class="btn btn-primary" style="padding: 0 15px; width: auto; flex: none;">Buscar Grupos</button>
+          </div>
+        </div>
+        <div id="webSearchResult" style="margin-top:10px; font-size:11px; text-align:center; color:var(--txt2);"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Auto-Joiner (Entrar em Grupos)</div>
+        <div class="input-group">
+          <span class="label">Lista de Links (um por linha)</span>
+          <textarea id="joinLinksList" placeholder="https://chat.whatsapp.com/..." style="min-height:120px;"></textarea>
+        </div>
+
+        <div id="joinStatusArea" style="display:none; margin-bottom:15px;">
+          <div class="prog-container">
+            <div class="prog-stats">
+              <span id="joinProgCount">0/0</span>
+              <span id="joinTimerTxt" style="color:var(--primary)">Aguardando...</span>
+            </div>
+            <div class="prog-bar-bg">
+              <div id="joinProgBar" class="prog-bar-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <button id="btnStartJoin" class="btn btn-primary">Iniciar Entradas em Massa</button>
+        <button id="btnStopJoin" class="btn btn-stop" style="display:none; margin-top:10px;">Parar Entradas</button>
+        <div id="joinResult" style="margin-top:10px; font-size:11px; text-align:center;"></div>
+      </div>
+    </div>
+
+    <!-- ABA: AUTOMAÃ‡Ã•ES -->
+    <!-- ABA: MODELOS -->
+    <div id="p-templates" class="panel">
+      
+      <!-- Listagem de Modelos -->
+      <div class="card" id="templateListCard">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" style="fill:var(--primary); width:18px;"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/></svg>
+          Modelos Salvos
+        </div>
+        <div id="templateList" style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+          <div style="text-align:center; color:var(--txt2); font-size:12px;">Nenhum modelo salvo.</div>
+        </div>
+        <button id="btnNewTemplate" class="btn btn-outline" style="margin-top:10px; border-color:var(--primary); color:var(--primary);">
+          + Criar Novo Modelo
+        </button>
+      </div>
+
+      <!-- Criador de Modelos -->
+      <div class="card" id="templateEditorCard" style="display:none; border-color:var(--primary);">
+        <div class="card-title" style="color:var(--primary);">
+          Criar Modelo
+        </div>
+        <div class="input-group" style="margin-top:10px;">
+          <span class="label">Mensagem do Modelo</span>
+          <textarea id="templateMsg" placeholder="Sua mensagem de modelo..."></textarea>
+          <div class="chips" style="margin-top:4px;">
+            <span class="chip" id="btnChipGroupName">{nome_grupo}</span>
+            <span class="chip" id="btnChipDate">{data}</span>
+          </div>
+        </div>
+
+        <div style="margin-top:15px; padding:10px; border:1px dashed var(--brd); border-radius:6px;">
+          <div class="label" style="margin-bottom:8px;">Mídia (Opcional)</div>
+          <div id="templateMediaEmpty" class="media-empty">
+            <svg viewBox="0 0 24 24" style="width:16px; fill:currentColor;"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+            <span>Anexar Imagens, Vídeos ou Arquivos</span>
+          </div>
+          <input type="file" id="templateMediaInput" style="display:none;" multiple>
+          <div id="templateMediaPreviewContainer" style="display:none; flex-direction:column; gap:5px; max-height:150px; overflow-y:auto; padding-right:5px;">
+            <!-- Previews dinâmicos aqui -->
+          </div>
+          <button id="btnAddMoreTemplateMedia" class="btn btn-outline" style="display:none; margin-top:5px; font-size:11px; padding:4px;">+ Adicionar mais arquivos</button>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px;">
+          <button id="btnCancelTemplate" class="btn btn-outline" style="border-color:var(--error); color:var(--error);">Cancelar</button>
+          <button id="btnSaveTemplate" class="btn btn-primary">Salvar Modelo</button>
+        </div>
+      </div>
+      
+      <div class="toggle-row" style="background:rgba(37,211,102,0.05); padding:12px; border-radius:8px; margin-top:10px; border:1px dashed var(--primary);">
+        <span class="label" style="color:var(--primary);">Usar Modelos no Ciclo 24h</span>
+        <label class="switch">
+          <input type="checkbox" id="useTemplatesCycleToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div style="margin-top:15px; background:var(--bg2); padding:15px; border-radius:8px; border:1px solid var(--brd);">
+        <div class="label" style="margin-bottom:10px; color:var(--primary); font-weight:bold;">Agendamento de Disparo</div>
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
+          <span style="font-size:12px;">Reiniciar ciclo a cada:</span>
+          <input type="number" id="templateRepeatInterval" value="60" style="width:60px; padding:4px;">
+          <span style="font-size:12px;">minutos</span>
+        </div>
+        <button id="btnStartTemplates" class="btn btn-primary" style="width:100%; font-size:14px; padding:12px;">🚀 Iniciar Ciclo de Modelos</button>
+      </div>
+
+    </div>
+
+    <!-- ABA: VERIFICADOR -->
+    <div id="p-verifier" class="panel">
+
+      <!-- Verificador de Número WhatsApp -->
+      <div class="card" style="border-color:var(--primary); background:rgba(37,211,102,0.03); margin-bottom:10px;">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" style="fill:var(--primary); width:18px;"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+          Verificar Números no WhatsApp
+        </div>
+        <div style="font-size:11px; color:var(--txt2); margin-bottom:10px;">Cole um ou vários números (um por linha) e verifique quais possuem WhatsApp.</div>
+        <div class="input-group">
+          <span class="label">Números (um por linha, com código do país)</span>
+          <textarea id="numberCheckerInput" placeholder="5511999999999&#10;5521988888888&#10;5531977777777" style="min-height:100px; font-size:12px;"></textarea>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">
+          <button id="btnCheckNumber" class="btn btn-primary">âœ… Verificar Números</button>
+          <button id="btnDownloadValidNumbers" class="btn btn-outline" style="display:none;">â¬‡ Baixar Válidos</button>
+        </div>
+        <div style="margin-top:8px;">
+          <div class="prog-container" id="numberCheckProgArea" style="display:none;">
+            <div class="prog-stats">
+              <span id="numberCheckCount" style="font-size:11px;"></span>
+              <span id="numberCheckStatus" style="font-size:11px; color:var(--primary);"></span>
+            </div>
+            <div class="prog-bar-bg"><div id="numberCheckBar" class="prog-bar-fill" style="width:0%"></div></div>
+          </div>
+        </div>
+        <div id="numberCheckerResult" style="margin-top:10px; font-size:12px; min-height:20px;"></div>
+      </div>
+
+      <!-- Verificador de Links de Grupos -->
+      <div class="card">
+        <div class="card-title">Verificador de Links (Grupos WhatsApp)</div>
+        <div class="input-group">
+          <span class="label">Lista de Links (um por linha)</span>
+          <textarea id="verifierLinksList" placeholder="https://chat.whatsapp.com/..." style="min-height:120px;"></textarea>
+        </div>
+        <button id="btnStartVerifier" class="btn btn-primary" style="margin-top:10px;">Verificar Links</button>
+        <div id="verifierActions" style="display:none; gap:10px; margin-top:10px;">
+          <button id="btnCopyVerifierLinks" class="btn btn-outline" style="flex:1; border-color:var(--primary); color:var(--primary); font-size:12px;">Copiar Válidos</button>
+          <button id="btnDownloadVerifierLinks" class="btn btn-outline" style="flex:1; border-color:var(--primary); color:var(--primary); font-size:12px;">Baixar .TXT</button>
+        </div>
+        <div id="verifierResultArea" style="margin-top:15px; display:none; flex-direction:column; gap:8px;">
+          <!-- Resultados injetados aqui via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA: ADICIONAR MEMBROS -->
+    <div id="p-add-members" class="panel">
+      <div class="card" style="margin-bottom:15px; border-color:var(--primary); background:rgba(37,211,102,0.02)">
+        <div class="card-title">Passo 1: Criar Novo Grupo (Opcional)</div>
+        <div style="display:flex; gap:8px; flex-direction:column;">
+          <input type="text" id="newGroupNameAdd" placeholder="Nome do Grupo" style="background:var(--bg3); border:1px solid var(--brd); color:var(--txt); padding:10px; border-radius:6px; font-size:12px; width:100%;">
+          <textarea id="newGroupParticipantAdd" placeholder="Cole a lista de números aqui (um por linha) para iniciar o grupo" style="background:var(--bg3); border:1px solid var(--brd); color:var(--txt); padding:10px; border-radius:6px; font-size:12px; width:100%; min-height:80px;"></textarea>
+          
+          <div class="input-group">
+            <div id="btnSelectNewGroupIconAdd" class="media-empty" style="padding:10px; font-size:12px; text-align:center; cursor:pointer; border:1px dashed var(--brd); border-radius:4px;">Selecionar Foto do Grupo (Opcional)</div>
+            <input type="file" id="newGroupIconInputAdd" style="display:none" accept="image/*">
+            <div id="newGroupIconPreviewAdd" style="display:none; align-items:center; gap:10px; margin-top:5px;">
+              <img id="newGroupIconImgAdd" src="" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
+              <span id="btnRemoveNewGroupIconAdd" style="color:var(--error); cursor:pointer; font-size:11px;">Remover Foto</span>
+            </div>
+          </div>
+
+          <button id="btnCreateGroupAdd" class="btn btn-outline" style="padding:10px; font-size:12px; border-color:var(--primary); color:var(--primary);">Criar Grupo e Selecioná-lo</button>
+          <div id="createGroupResultAdd" style="margin-top:5px; font-size:11px; text-align:center;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Passo 2: Adicionar Membros aos Grupos</div>
+        
+        <div class="input-group">
+          <span class="label">Números (com código do país, ex: 5511999999999), um por linha</span>
+          <textarea id="addMembersNumbers" placeholder="5511999999999\n5511888888888" style="min-height:120px;"></textarea>
+        </div>
+
+        <div class="row" style="margin-top: 15px;">
+          <div class="col">
+            <span class="label">Adicionar de (X) em (X) membros</span>
+            <input type="number" id="addMembersBatch" value="5" min="1">
+          </div>
+          <div class="col">
+            <span class="label">Intervalo (Minutos)</span>
+            <input type="number" id="addMembersInterval" value="5" min="1">
+          </div>
+        </div>
+
+        <div id="addMembersStatusArea" style="display:none; margin-top:15px; margin-bottom:15px;">
+          <div class="prog-container">
+            <div class="prog-stats">
+              <span id="addMembersProgCount">0/0</span>
+              <span id="addMembersTimerTxt" style="color:var(--primary)">Aguardando...</span>
+            </div>
+            <div class="prog-bar-bg">
+              <div id="addMembersProgBar" class="prog-bar-fill"></div>
+            </div>
+          </div>
+        </div>
+          <div style="font-size:11px; color:var(--txt2); margin-top:10px; margin-bottom:10px;">
+          Os membros serão adicionados em todos os grupos selecionados na aba <b>Grupos</b>.
+        </div>
+        <button id="btnStartAddMembers" class="btn btn-primary">Iniciar Adição de Membros</button>
+        <button id="btnStopAddMembers" class="btn btn-stop" style="display:none; margin-top:10px;">Parar Adição</button>
+      </div>
+    </div>
+
+    <!-- PAINEL GERENCIAR GRUPO -->
+    <div id="p-gerenciar" class="panel">
+      <div class="card" style="border-color:var(--primary); background:rgba(37,211,102,0.02)">
+        <div class="card-title" style="color:var(--primary);">
+          <svg viewBox="0 0 24 24" style="fill:currentColor; width:18px; margin-right:5px;">
+            <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+          </svg>
+          Ações e Automações do Grupo
+        </div>
+        
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:15px;">
+          <div class="row">
+            <button class="btn btn-outline" id="btnGroupOpen" style="flex:1;">🔓 Abrir Grupo</button>
+            <button class="btn btn-outline" id="btnGroupClose" style="flex:1; border-color:var(--error); color:var(--error);">🔒 Fechar Grupo</button>
+          </div>
+          
+          <div class="row">
+            <button class="btn btn-outline" id="btnGroupClear" style="flex:1;">🗑️ Limpar Chat</button>
+            <button class="btn btn-outline" id="btnGroupLink" style="flex:1;">🔗 Link do Grupo</button>
+          </div>
+          
+          <div class="row">
+            <button class="btn btn-outline" id="btnGroupTagAll" style="flex:1;">📢 Marcar Todos</button>
+            <button class="btn btn-outline" id="btnGroupHideTag" style="flex:1;">👻 Hidetag</button>
+          </div>
+          
+          <hr style="border:0; border-top:1px solid var(--brd); margin:10px 0;">
+          <div style="font-size:12px; font-weight:bold; color:var(--txt); margin-bottom:5px;">Mensagens Automáticas</div>
+          
+          <div style="display:flex; align-items:center; background:var(--bg3); padding:8px; border-radius:6px; border:1px solid var(--brd);">
+            <label class="switch">
+              <input type="checkbox" id="welcomeEnabled">
+              <span class="slider"></span>
+            </label>
+            <span style="font-size:12px; margin-left:10px;">Ativar Boas Vindas (Novos Membros)</span>
+          </div>
+          <div id="welcomeSettings" style="display:none; margin-top:5px; margin-bottom:10px;">
+            <textarea id="welcomeMsg" class="input" style="width:100%; height:60px; font-size:12px; padding:8px; border-radius:6px;" placeholder="Ex: Seja bem-vindo(a), @membro!"></textarea>
+            <div style="font-size:10px; color:var(--txt2); margin-top:3px;">Tags: <b>@membro</b> (marca a pessoa), <b>{nome_grupo}</b> (nome do grupo).</div>
+          </div>
+          
+          <hr style="border:0; border-top:1px solid var(--brd); margin:10px 0;">
+          <div style="font-size:12px; font-weight:bold; color:var(--txt); margin-bottom:5px;">Anti-Spam (Filtros Automáticos)</div>
+          
+          <div style="display:flex; align-items:center; background:var(--bg3); padding:8px; border-radius:6px; border:1px solid var(--brd);">
+            <label class="switch">
+              <input type="checkbox" id="antiLink">
+              <span class="slider"></span>
+            </label>
+            <span style="font-size:12px; margin-left:10px;">Anti-Link</span>
+          </div>
+          <div style="display:flex; align-items:center; background:var(--bg3); padding:8px; border-radius:6px; border:1px solid var(--brd);">
+            <label class="switch">
+              <input type="checkbox" id="antiAudio">
+              <span class="slider"></span>
+            </label>
+            <span style="font-size:12px; margin-left:10px;">Anti-Áudio</span>
+          </div>
+          <div style="display:flex; align-items:center; background:var(--bg3); padding:8px; border-radius:6px; border:1px solid var(--brd);">
+            <label class="switch">
+              <input type="checkbox" id="antiImage">
+              <span class="slider"></span>
+            </label>
+            <span style="font-size:12px; margin-left:10px;">Anti-Imagem</span>
+          </div>
+          <div style="display:flex; align-items:center; background:var(--bg3); padding:8px; border-radius:6px; border:1px solid var(--brd);">
+            <label class="switch">
+              <input type="checkbox" id="antiVideo">
+              <span class="slider"></span>
+            </label>
+            <span style="font-size:12px; margin-left:10px;">Anti-Vídeo</span>
+          </div>
+          <div style="display:flex; align-items:center; background:var(--bg3); padding:8px; border-radius:6px; border:1px solid var(--brd);">
+            <label class="switch">
+              <input type="checkbox" id="antiDocument">
+              <span class="slider"></span>
+            </label>
+            <span style="font-size:12px; margin-left:10px;">Anti-Documento</span>
+          </div>
+          <div style="display:flex; align-items:center; background:var(--bg3); padding:8px; border-radius:6px; border:1px solid var(--brd);">
+            <label class="switch">
+              <input type="checkbox" id="antiSticker">
+              <span class="slider"></span>
+            </label>
+            <span style="font-size:12px; margin-left:10px;">Anti-Sticker</span>
+          </div>
+        </div>
+
+        <div class="input-group" style="margin-top:15px;">
+          <span class="label">Punição ao Infrator:</span>
+          <select id="moderationAction" style="background:var(--bg3); border:1px solid var(--brd); color:var(--txt); padding:8px; border-radius:6px; font-size:12px; width:100%;">
+            <option value="delete">Somente Apagar a Mensagem</option>
+            <option value="ban">Apagar a Mensagem e Banir Usuário</option>
+          </select>
+        </div>
+        
+        <div style="font-size:11px; color:var(--txt2); margin-top:10px;">
+          As automações só funcionam se você for administrador do grupo e mantiver a aba do WhatsApp Web aberta.
+        </div>
+      </div>
+      <button id="btnSaveModeration" class="btn btn-primary" style="width:100%; margin-top:15px;">Salvar Regras</button>
+    </div>
+
+    <!-- ABA: AUTO-RESPOSTA -->
+    <div id="p-autoresposta" class="panel">
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" style="fill:var(--primary); width:18px; margin-right:6px;"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+          Auto-Resposta por Palavra-chave
+        </div>
+        <div style="font-size:11px; color:var(--txt2); margin-bottom:12px;">
+          Quando alguém enviar uma mensagem contendo a palavra-chave, a extensão responde automaticamente.
+        </div>
+
+        <!-- Toggle geral -->
+        <div class="toggle-row" style="margin-bottom:12px;">
+          <span class="label" style="color:var(--primary); font-weight:bold;">Ativar Auto-Resposta</span>
+          <label class="switch">
+            <input type="checkbox" id="autoReplyEnabled">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- Onde responder -->
+        <div class="input-group">
+          <span class="label">Onde responder</span>
+          <select id="autoReplyScope" style="background:var(--bg3); color:var(--txt); border:1px solid var(--brd); padding:8px; border-radius:6px; width:100%; font-size:12px;">
+            <option value="private">Apenas mensagens privadas (DM)</option>
+            <option value="groups">Apenas nos grupos</option>
+            <option value="both">Privado e grupos</option>
+          </select>
+        </div>
+
+        <!-- Delay entre respostas -->
+        <div class="input-group" style="margin-top:8px;">
+          <span class="label">Delay entre respostas (segundos)</span>
+          <input type="number" id="autoReplyDelay" value="2" min="1" max="60" style="width:80px;">
+        </div>
+
+        <hr style="border:0; border-top:1px solid var(--brd); margin:15px 0;">
+
+        <!-- Adicionar nova regra -->
+        <div style="font-size:12px; font-weight:bold; color:var(--txt); margin-bottom:10px;">➕ Nova Regra</div>
+        <div class="input-group">
+          <span class="label">Palavra-chave (ex: preço, horário, oi)</span>
+          <input type="text" id="autoReplyKeyword" placeholder="Ex: preço">
+        </div>
+        <div class="input-group" style="margin-top:8px;">
+          <span class="label">Condição de disparo</span>
+          <select id="autoReplyMatchType" class="input">
+            <option value="contains">Contém a palavra</option>
+            <option value="exact">Exatamente igual</option>
+          </select>
+        </div>
+        <div class="input-group" style="margin-top:8px;">
+          <span class="label">Resposta automática</span>
+          <textarea id="autoReplyMessage" placeholder="Ex: Nosso preço é R$97! Acesse: link.com" style="min-height:80px;"></textarea>
+        </div>
+        <div class="toggle-row" style="margin-top:8px;">
+          <span class="label" style="font-size:11px;">Apenas uma vez por contato (24h)</span>
+          <label class="switch">
+            <input type="checkbox" id="autoReplyOncePerContact">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <button id="btnAddAutoReply" class="btn btn-primary" style="margin-top:10px; width:100%;">+ Adicionar Regra</button>
+
+        <hr style="border:0; border-top:1px solid var(--brd); margin:15px 0;">
+
+        <!-- Lista de regras -->
+        <div style="font-size:12px; font-weight:bold; color:var(--txt); margin-bottom:8px;">📋 Regras Ativas</div>
+        <div id="autoReplyList" style="display:flex; flex-direction:column; gap:8px; min-height:40px;">
+          <div style="font-size:11px; color:var(--txt2); text-align:center; padding:10px;">Nenhuma regra cadastrada.</div>
+        </div>
+
+        <button id="btnSaveAutoReply" class="btn btn-primary" style="margin-top:15px; width:100%;">💾 Salvar Configurações</button>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="license.js"></script>
+  <script src="popup.js"></script>
+</body>
+
+</html>
