@@ -181,10 +181,19 @@ module.exports = {
     wppconnect.create({
       session: 'group-sender-crm',
       puppeteerOptions: {
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+          '--disable-gpu'
+        ]
       },
       catchQR: (base64Qrimg, asciiQR, attempts, urlCode) => {
-        console.log('Terminal QR Code:');
+        console.log('Terminal QR Code (Tentativa ' + attempts + '):');
         console.log(asciiQR);
         if (io) io.emit('qr_code', base64Qrimg);
       },
@@ -192,7 +201,8 @@ module.exports = {
         console.log('Status da Sessão:', statusSession);
         if (io) io.emit('session_status', statusSession);
       },
-      headless: true
+      headless: true,
+      autoClose: 0
     })
     .then((wppClient) => {
       client = wppClient;
