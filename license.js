@@ -183,6 +183,11 @@
                     return false;
                 }
                 chrome.storage.local.set({ 'license_cache': { key: licenseKey, ts: Date.now(), status: 'active' } });
+                document.body.setAttribute('data-license-authorized', 'true');
+                const blocker = document.getElementById(BLOCKER_ID);
+                if (blocker) blocker.remove();
+                document.body.style.overflow = 'auto';
+                chrome.runtime.sendMessage({ action: 'LICENSE_VALIDATED', sig: _GCRM_SIG });
                 return true;
             };
 
