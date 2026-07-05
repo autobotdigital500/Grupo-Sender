@@ -28,58 +28,58 @@ async function handleGroupParticipantChanged(evt) {
     if (!groupId) return;
     const action = evt.action;
     if (!action) return;
-    
+
     const isJoin = (action === 'add');
     const isLeave = (action === 'remove');
-    
+
     if ((isJoin && !settings.welcomeEnabled) || (isLeave && !settings.leaveEnabled)) return;
     if (!isGroupAllowed(groupId)) return;
-    
+
     const participants = evt.participants || [];
     if (participants.length === 0) return;
-    
+
     const myJid = sock.user?.id ? sock.user.id.split(':')[0] + '@s.whatsapp.net' : null;
     const uniqueParticipants = [...new Set(participants)].filter(jid => jid && jid !== myJid);
     if (uniqueParticipants.length === 0) return;
-    
+
     for (const participantJid of uniqueParticipants) {
       if (settings.ignoreBots && isBotJid(participantJid)) continue;
-      
+
       let text = isJoin ? settings.welcomeMsg : settings.leaveMsg;
       if (!text || !text.trim()) continue;
-      
+
       const groupEnabled = isJoin ? settings.welcomeGroupEnabled : settings.leaveGroupEnabled;
       const privateEnabled = isJoin ? settings.welcomePrivateEnabled : settings.leavePrivateEnabled;
-      
+
       if (!groupEnabled && !privateEnabled) continue;
-      
+
       let mentions = [];
       let groupName = 'Grupo';
-      
+
       if (text.includes('{nome_grupo}')) {
-        try { 
-          const groupInfo = await sock.groupMetadata(groupId); 
-          groupName = groupInfo.subject || 'Grupo'; 
-          text = text.replace(/{nome_grupo}/g, groupName); 
-        } catch(e) { 
-          text = text.replace(/{nome_grupo}/g, groupName); 
+        try {
+          const groupInfo = await sock.groupMetadata(groupId);
+          groupName = groupInfo.subject || 'Grupo';
+          text = text.replace(/{nome_grupo}/g, groupName);
+        } catch (e) {
+          text = text.replace(/{nome_grupo}/g, groupName);
         }
       }
-      
+
       if (text.includes('{nome_membro}')) {
-        text = text.replace(/{nome_membro}/g, 'Membro'); 
+        text = text.replace(/{nome_membro}/g, 'Membro');
       }
-      
+
       if (text.includes('@membro') || text.includes('{mencao}')) {
         const mentionTag = `@${participantJid.split('@')[0]}`;
         text = text.replace(/@membro|{mencao}/g, mentionTag);
         mentions.push(participantJid);
       }
-      
+
       text = sanitizeMessage(text);
-      
+
       await delay(settings.delayBetweenMessages || 1500);
-      
+
       if (groupEnabled) {
         await sock.sendMessage(groupId, { text, mentions });
       }
@@ -98,47 +98,47 @@ async function handleMessage(msg) {
     const body = msg.message?.conversation || msg.message?.extendedTextMessage?.text || '';
     const sender = msg.key.remoteJid;
     const fromMe = msg.key.fromMe;
-    
+
     // Auto-resposta
     if (settings.autoReplyEnabled && body && !fromMe) {
       const scope = settings.autoReplyScope || 'private';
       let shouldCheck = true;
       if (scope === 'private' && isGroup) shouldCheck = false;
       if (scope === 'groups' && !isGroup) shouldCheck = false;
-      
+
       if (shouldCheck) {
         const rules = settings.autoReplyRules || [];
         const bodyLower = body.toLowerCase().trim();
-        
+
         for (const rule of rules) {
           if (!rule.keyword || !rule.message) continue;
           const kw = rule.keyword.toLowerCase().trim();
-          
+
           if (rule.matchType === 'exact') {
             if (bodyLower !== kw) continue;
           } else {
             if (!bodyLower.includes(kw)) continue;
           }
-          
+
           const delayMs = (settings.autoReplyDelay || 2) * 1000;
           await delay(delayMs);
-          
+
           let reply = rule.message;
           if (reply.includes('{nome}')) {
             reply = reply.replace(/{nome}/g, 'você');
           }
-          
+
           await sock.sendMessage(sender, { text: reply });
           break;
         }
       }
     }
-    
+
     // Moderação
     if (isGroup && !fromMe && isGroupAllowed(sender)) {
       let shouldDelete = false;
       const textLower = body.toLowerCase();
-      
+
       if (settings.modAntiLink && /(https?:\/\/[^\s]+|www\.[^\s]+|wa\.me\/\d+)/gi.test(textLower)) shouldDelete = true;
       if (settings.modAntiAudio && (msg.message?.audioMessage)) shouldDelete = true;
       if (settings.modAntiImage && msg.message?.imageMessage) shouldDelete = true;
@@ -149,7 +149,7 @@ async function handleMessage(msg) {
         const badWords = settings.modProfanityWords.split(',').map(w => w.trim().toLowerCase()).filter(w => w);
         if (badWords.some(w => textLower.includes(w))) shouldDelete = true;
       }
-      
+
       if (shouldDelete) {
         const action = settings.modAction || 'delete';
         if (action === 'delete' || action === 'delete_ban') {
@@ -178,7 +178,7 @@ async function handleMessage(msg) {
 async function connectToWhatsApp() {
   const { state, saveCreds } = await useMultiFileAuthState('sessions');
   const { version } = await fetchLatestBaileysVersion();
-  
+
   sock = makeWASocket({
     version,
     logger: pino({ level: 'silent' }),
@@ -188,12 +188,12 @@ async function connectToWhatsApp() {
     generateHighQualityLinkPreview: false,
     syncFullHistory: false
   });
-  
+
   sock.ev.on('creds.update', saveCreds);
-  
+
   sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect, qr } = update;
-    
+
     if (qr && ioInstance) {
       try {
         const qrUrl = await QRCode.toDataURL(qr);
@@ -203,17 +203,17 @@ async function connectToWhatsApp() {
         console.error('Erro gerando QR', e);
       }
     }
-    
+
     if (connection === 'close') {
       const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
       console.log('connection closed due to ', lastDisconnect?.error, ', reconnecting ', shouldReconnect);
-      
+
       if (shouldReconnect) {
         setTimeout(() => connectToWhatsApp(), 5000);
       } else {
         if (ioInstance) ioInstance.emit('session_status', 'Desconectado');
-        try { fs.rmSync('sessions', { recursive: true, force: true }); } catch (e) {}
-        setTimeout(() => connectToWhatsApp(), 2000); 
+        try { fs.rmSync('sessions', { recursive: true, force: true }); } catch (e) { }
+        setTimeout(() => connectToWhatsApp(), 2000);
       }
     } else if (connection === 'open') {
       console.log('Opened connection');
@@ -241,11 +241,11 @@ async function connectToWhatsApp() {
 function init(io) {
   ioInstance = io;
   console.log('🚀 Iniciando servidor do bot (Baileys)...');
-  
+
   connectToWhatsApp().catch(err => console.error('Error in connectToWhatsApp:', err));
 
   io.on('connection', (socket) => {
-    
+
     // Ponte simples para as extensões (apenas mock para não dar erro)
     socket.on('chrome_message', async (msg, callback) => {
       console.log('[chrome_message recebida via WS]', msg);
@@ -265,17 +265,17 @@ function init(io) {
         console.log(">>> INICIANDO CAMPANHA RECEBIDA NO BACKEND!");
         console.log(">>> Quantidade de Grupos Selecionados:", msg.payload.items ? msg.payload.items.length : 0);
         console.log(">>> Variações de Mensagem:", msg.payload.variations ? msg.payload.variations.length : 0);
-        
+
         if (callback) callback({ success: true });
-        
+
         const payload = msg.payload;
         const items = payload.items || [];
         const variations = payload.variations || [];
         const cfg = payload.cfg || { delayMin: 5, delayMax: 15 };
-        
-        if (!sock) {
-          console.log(">>> ERRO: WhatsApp não está conectado!");
-          socket.emit('chrome_event', { action: 'taskProgress', state: { running: false, type: 'campaign', textStatus: 'Erro: WhatsApp Desconectado', errors: ['Desconectado'] } });
+
+        if (!sock || currentConnectionState !== 'CONNECTED') {
+          console.log(">>> ERRO: WhatsApp não está conectado (Aguardando QR Code)!");
+          socket.emit('chrome_event', { action: 'taskProgress', state: { running: false, type: 'campaign', textStatus: 'Erro: Escaneie o QR Code primeiro!', errors: ['Desconectado'] } });
           return;
         }
 
@@ -291,38 +291,41 @@ function init(io) {
             const delayMin = Number(cfg.delayMin) || 5;
             const delayMax = Number(cfg.delayMax) || 15;
             const delayMs = Math.floor(Math.random() * (delayMax - delayMin + 1) + delayMin) * 1000;
-            
+
             console.log(`>>> Preparando para enviar para ${group.name} (Aguardando ${delayMs}ms)`);
-            socket.emit('chrome_event', { action: 'taskProgress', state: { running: true, type: 'campaign', progress, total: items.length, textStatus: `Aguardando ${Math.round(delayMs/1000)}s...` } });
-            
-            await delay(delayMs);
+
+            const waitSeconds = Math.round(delayMs / 1000);
+            for (let s = waitSeconds; s > 0; s--) {
+              socket.emit('chrome_event', { action: 'taskProgress', state: { running: true, type: 'campaign', progress, total: items.length, textStatus: `Aguardando ${s}s...` } });
+              await delay(1000);
+            }
 
             try {
               console.log(`>>> Enviando mensagem para ${group.name}...`);
               const variation = variations[Math.floor(Math.random() * variations.length)];
               if (!variation && variations.length > 0) continue;
-              
+
               let text = variation ? (variation.text || '') : '';
               text = text.replace(/{nome_grupo}/g, group.name || 'Grupo');
               text = sanitizeMessage(text);
-              
+
               let mentions = [];
               if (payload.mentionAll) {
                 try {
                   const meta = await sock.groupMetadata(group.id);
                   mentions = meta.participants.map(p => p.id);
                   if (!text.includes('@everyone')) text += '\n\n' + mentions.map(m => `@${m.split('@')[0]}`).join(' ');
-                } catch(e) {
+                } catch (e) {
                   console.log(">>> Aviso: Não foi possível obter membros para menção.");
                 }
               }
-              
+
               if (variation && variation.media && variation.media.length > 0) {
                 const media = variation.media[0];
                 const base64Data = media.data.split(';base64,').pop();
                 const buffer = Buffer.from(base64Data, 'base64');
                 console.log(`>>> Enviando MÍDIA (${media.type}) para ${group.name}`);
-                
+
                 if (media.type.startsWith('image/')) {
                   await sock.sendMessage(group.id, { image: buffer, caption: text, mentions });
                 } else if (media.type.startsWith('video/')) {
@@ -342,7 +345,7 @@ function init(io) {
               errors.push(`Erro no grupo ${group.name}: ${err.message}`);
             }
           }
-          
+
           console.log(">>> CAMPANHA FINALIZADA!");
           socket.emit('chrome_event', { action: 'taskProgress', state: { running: false, type: 'campaign', progress, total: items.length, textStatus: 'Finalizado', errors } });
         })();
@@ -355,7 +358,7 @@ function init(io) {
             id: g.id,
             name: g.subject || 'Grupo',
             participants: (g.participants || []).length,
-            isCreator: g.owner ? g.owner === sock.user?.id?.split(':')[0]+'@s.whatsapp.net' : false
+            isCreator: g.owner ? g.owner === sock.user?.id?.split(':')[0] + '@s.whatsapp.net' : false
           }));
           if (callback) callback({ groups: list });
         } catch (e) {
