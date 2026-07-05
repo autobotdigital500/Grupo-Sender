@@ -11,7 +11,8 @@ const io = new Server(server, {
   cors: {
     origin: '*',
     methods: ['GET', 'POST']
-  }
+  },
+  maxHttpBufferSize: 5e7 // 50MB limit to allow media uploads
 });
 
 app.use(cors());
