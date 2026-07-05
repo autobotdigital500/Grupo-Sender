@@ -1470,9 +1470,9 @@ function startCampaign(cycleIndex = 0) {
       action: 'taskStart',
       payload: {
         type: 'campaign',
-        // Envia apenas o essencial para evitar payload pesado
+        // Envia as variações inteiras via Socket (Node.js suporta payloads grandes facilmente)
         items: groupsToEnv.map(g => ({ id: g.id, name: g.name })),
-        variations: [],
+        variations: variations,
         isTemplateCycle,
         cfg,
         mentionAll: $('mentionMembersToggle').checked,
