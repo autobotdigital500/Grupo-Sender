@@ -1472,43 +1472,36 @@ function startCampaign(cycleIndex = 0) {
   $('campaignStatus').style.display = 'block';
   $('methodTxt').textContent = 'Iniciando...';
 
-  try {
-    chrome.runtime.sendMessage({
-      action: 'taskStart',
-      payload: {
-        type: 'campaign',
-        // Envia as variações inteiras via Socket (Node.js suporta payloads grandes facilmente)
-        items: groupsToEnv.map(g => ({ id: g.id, name: g.name })),
-        variations: variations,
-        isTemplateCycle,
-        cfg,
-        mentionAll: $('mentionMembersToggle').checked,
-        repeatCampaign: $('repeatCampaignToggle').checked,
-        repeatInterval: $('repeatInterval').value || '60',
-        cycleIndex
-      }
-    }, (r) => {
+  const payload = {
+    type: 'campaign',
+    items: groupsToEnv.map(g => ({ id: g.id, name: g.name })),
+    isTemplateCycle,
+    cfg,
+    mentionAll: $('mentionMembersToggle').checked,
+    repeatCampaign: $('repeatCampaignToggle').checked,
+    repeatInterval: $('repeatInterval').value || '60',
+    cycleIndex
+  };
+
+  const sendAction = () => {
+    chrome.runtime.sendMessage({ action: 'taskStart', payload }, (r) => {
       if (chrome.runtime.lastError) {
         console.error('TaskStart Error:', chrome.runtime.lastError);
+      } else if (r && r.error === 'ALREADY_RUNNING') {
+        // Se estiver travado no background, força a parada e tenta iniciar de novo
+        chrome.runtime.sendMessage({ action: 'taskStop' }, () => {
+          setTimeout(() => {
+            chrome.runtime.sendMessage({ action: 'taskStart', payload });
+          }, 1000);
+        });
       }
     });
+  };
+
+  try {
+    sendAction();
   } catch (e) {
     console.error('Exception in sendMessage during startCampaign:', e);
-    // Tenta enviar com um payload reduzido (removendo variações caso seja o motivo do erro de tamanho)
-    chrome.runtime.sendMessage({
-      action: 'taskStart',
-      payload: {
-        type: 'campaign',
-        items: groupsToEnv.map(g => ({ id: g.id, name: g.name })),
-        variations: [], // Fallback para aliviar o tamanho
-        isTemplateCycle,
-        cfg,
-        mentionAll: $('mentionMembersToggle').checked,
-        repeatCampaign: $('repeatCampaignToggle').checked,
-        repeatInterval: $('repeatInterval').value || '60',
-        cycleIndex
-      }
-    });
   }
 }
 
