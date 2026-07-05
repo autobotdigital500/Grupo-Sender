@@ -155,6 +155,14 @@
             }
         }, 2000);
 
+        // Guard: chrome.storage só existe em extensões. No contexto web, remove o shield e libera a UI.
+        if (typeof chrome === 'undefined' || !chrome.storage) {
+            const shield = document.getElementById('gcrm-initial-shield');
+            if (shield) shield.remove();
+            document.body.setAttribute('data-license-authorized', 'true');
+            return;
+        }
+
         chrome.storage.local.get(['license_key', 'license_cache'], async (res) => {
             const licenseKey = res.license_key;
             if (!licenseKey) return injectUI();
