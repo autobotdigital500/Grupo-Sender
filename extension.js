@@ -1452,20 +1452,27 @@ function startCampaign(cycleIndex = 0) {
   }
 
   // Salva imediatamente para que o background pegue os dados mais recentes do storage
-  // Isso evita o erro de 'message size limit' do chrome.runtime.sendMessage
-  chrome.storage.local.set({
-    variations,
-    templates,
-    selected: Array.from(selected),
-    allGroups,
-    cfg,
-    useTemplatesCycle
-  }, () => {
-    $('btnStart').style.display = 'none';
-    $('campaignControls').style.display = 'flex';
-    $('campaignStatus').style.display = 'block';
-    $('methodTxt').textContent = 'Iniciando...';
+  try {
+    chrome.storage.local.set({
+      variations,
+      templates,
+      selected: Array.from(selected),
+      allGroups,
+      cfg,
+      useTemplatesCycle
+    }, () => {
+      if (chrome.runtime.lastError) console.error('Save error in startCampaign:', chrome.runtime.lastError);
+    });
+  } catch (e) {
+    console.error('Exception in storage.local.set during startCampaign:', e);
+  }
 
+  $('btnStart').style.display = 'none';
+  $('campaignControls').style.display = 'flex';
+  $('campaignStatus').style.display = 'block';
+  $('methodTxt').textContent = 'Iniciando...';
+
+  try {
     chrome.runtime.sendMessage({
       action: 'taskStart',
       payload: {
@@ -1483,11 +1490,26 @@ function startCampaign(cycleIndex = 0) {
     }, (r) => {
       if (chrome.runtime.lastError) {
         console.error('TaskStart Error:', chrome.runtime.lastError);
-        // Se falhar o sendMessage, tentamos de novo com payload ainda menor
-        // mas o alert abaixo avisa o usuário.
       }
     });
-  });
+  } catch (e) {
+    console.error('Exception in sendMessage during startCampaign:', e);
+    // Tenta enviar com um payload reduzido (removendo variações caso seja o motivo do erro de tamanho)
+    chrome.runtime.sendMessage({
+      action: 'taskStart',
+      payload: {
+        type: 'campaign',
+        items: groupsToEnv.map(g => ({ id: g.id, name: g.name })),
+        variations: [], // Fallback para aliviar o tamanho
+        isTemplateCycle,
+        cfg,
+        mentionAll: $('mentionMembersToggle').checked,
+        repeatCampaign: $('repeatCampaignToggle').checked,
+        repeatInterval: $('repeatInterval').value || '60',
+        cycleIndex
+      }
+    });
+  }
 }
 
 
