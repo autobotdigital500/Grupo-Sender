@@ -279,7 +279,7 @@ function init(io) {
           return;
         }
 
-        socket.emit('chrome_event', { action: 'taskProgress', state: { running: true, type: 'campaign', progress: 0, total: items.length, textStatus: 'Iniciando...' } });
+        ioInstance.emit('chrome_event', { action: 'taskProgress', state: { running: true, type: 'campaign', progress: 0, total: items.length, textStatus: 'Iniciando...' } });
 
         let progress = 0;
         let errors = [];
@@ -298,7 +298,7 @@ function init(io) {
             const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
             const waitSeconds = Math.round(delayMs / 1000);
             for (let s = waitSeconds; s > 0; s--) {
-              socket.emit('chrome_event', { action: 'taskProgress', state: { running: true, type: 'campaign', progress, total: items.length, textStatus: `Aguardando ${s}s para enviar para ${group.name}...` } });
+              ioInstance.emit('chrome_event', { action: 'taskProgress', state: { running: true, type: 'campaign', progress, total: items.length, textStatus: `Aguardando ${s}s para enviar para ${group.name}...` } });
               await sleep(1000);
             }
 
@@ -307,15 +307,15 @@ function init(io) {
               
               const templates = payload.templates || [];
               const isTemplateCycle = payload.isTemplateCycle || false;
-              const cycleIndex = payload.cycleIndex || 0;
 
               let text = '';
               let mediaArray = [];
 
               if (isTemplateCycle && templates.length > 0) {
-                const t = templates[cycleIndex % templates.length];
+                const t = templates[payload.cycleIndex % templates.length];
                 text = t.text || '';
                 mediaArray = Array.isArray(t.media) ? t.media : (t.media ? [t.media] : []);
+                payload.cycleIndex++; // Incrementa para a próxima mensagem
               } else {
                 const variation = variations[Math.floor(Math.random() * variations.length)];
                 if (!variation && variations.length > 0) continue;
@@ -364,7 +364,7 @@ function init(io) {
           }
 
           console.log(">>> CAMPANHA FINALIZADA!");
-          socket.emit('chrome_event', { action: 'taskProgress', state: { running: false, type: 'campaign', progress, total: items.length, textStatus: 'Finalizado', errors } });
+          ioInstance.emit('chrome_event', { action: 'taskProgress', state: { running: false, type: 'campaign', progress, total: items.length, textStatus: 'Finalizado', errors } });
         })();
       }
       else if (msg.action === 'getGroups') {
