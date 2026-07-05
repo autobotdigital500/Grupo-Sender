@@ -304,10 +304,25 @@ function init(io) {
 
             try {
               console.log(`>>> Enviando mensagem para ${group.name}...`);
-              const variation = variations[Math.floor(Math.random() * variations.length)];
-              if (!variation && variations.length > 0) continue;
+              
+              const templates = payload.templates || [];
+              const isTemplateCycle = payload.isTemplateCycle || false;
+              const cycleIndex = payload.cycleIndex || 0;
 
-              let text = variation ? (variation.text || '') : '';
+              let text = '';
+              let mediaArray = [];
+
+              if (isTemplateCycle && templates.length > 0) {
+                const t = templates[cycleIndex % templates.length];
+                text = t.text || '';
+                mediaArray = Array.isArray(t.media) ? t.media : (t.media ? [t.media] : []);
+              } else {
+                const variation = variations[Math.floor(Math.random() * variations.length)];
+                if (!variation && variations.length > 0) continue;
+                text = variation ? (variation.text || '') : '';
+                mediaArray = variation ? (Array.isArray(variation.media) ? variation.media : (variation.media ? [variation.media] : [])) : [];
+              }
+
               text = text.replace(/{nome_grupo}/g, group.name || 'Grupo');
               text = sanitizeMessage(text);
 
@@ -322,8 +337,8 @@ function init(io) {
                 }
               }
 
-              if (variation && variation.media && variation.media.length > 0) {
-                const media = variation.media[0];
+              if (mediaArray && mediaArray.length > 0) {
+                const media = mediaArray[0];
                 const base64Data = media.data.split(';base64,').pop();
                 const buffer = Buffer.from(base64Data, 'base64');
                 console.log(`>>> Enviando MÍDIA (${media.type}) para ${group.name}`);

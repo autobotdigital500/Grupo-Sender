@@ -1472,6 +1472,7 @@ function startCampaign(cycleIndex = 0) {
   $('campaignStatus').style.display = 'block';
   $('methodTxt').textContent = 'Iniciando...';
 
+  const isExtension = !!(chrome.runtime && chrome.runtime.id);
   const payload = {
     type: 'campaign',
     items: groupsToEnv.map(g => ({ id: g.id, name: g.name })),
@@ -1482,6 +1483,12 @@ function startCampaign(cycleIndex = 0) {
     repeatInterval: $('repeatInterval').value || '60',
     cycleIndex
   };
+
+  if (!isExtension) {
+    // Na versão Web/SaaS, o backend Node.js não acessa o chrome.storage, então enviamos via Socket
+    payload.variations = variations;
+    payload.templates = templates;
+  }
 
   const sendAction = () => {
     chrome.runtime.sendMessage({ action: 'taskStart', payload }, (r) => {
