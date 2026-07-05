@@ -128,9 +128,10 @@
         div.innerHTML = BLOCKER_HTML;
         const btn = div.querySelector('#ext-license-btn');
         if (btn) btn.onclick = handleLicenseValidation;
-        (document.documentElement || document.body).appendChild(div);
+        document.body.appendChild(div);
         document.body.style.overflow = 'hidden';
-        document.body.setAttribute('data-license-authorized', 'false');
+        const shield = document.getElementById('gcrm-initial-shield');
+        if (shield) shield.remove();
     }
 
     // Exportação da lógica de verificação
@@ -181,11 +182,12 @@
                     const errorMsg = document.getElementById('ext-error-msg');
                     if (errorMsg) { errorMsg.innerText = result.msg; errorMsg.style.display = 'block'; }
                     return false;
-                }
                 chrome.storage.local.set({ 'license_cache': { key: licenseKey, ts: Date.now(), status: 'active' } });
                 document.body.setAttribute('data-license-authorized', 'true');
                 const blocker = document.getElementById(BLOCKER_ID);
                 if (blocker) blocker.remove();
+                const shield = document.getElementById('gcrm-initial-shield');
+                if (shield) shield.remove();
                 document.body.style.overflow = 'auto';
                 chrome.runtime.sendMessage({ action: 'LICENSE_VALIDATED', sig: _GCRM_SIG });
                 return true;
@@ -197,6 +199,8 @@
 
             if (isCacheValid) {
                 document.body.setAttribute('data-license-authorized', 'true');
+                const shield = document.getElementById('gcrm-initial-shield');
+                if (shield) shield.remove();
                 chrome.runtime.sendMessage({ action: 'LICENSE_VALIDATED', sig: _GCRM_SIG });
                 // Valida no fundo para pegar suspensões
                 performFullCheck();
