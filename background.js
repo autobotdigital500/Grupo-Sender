@@ -870,8 +870,9 @@ try {
             if (taskState.type === 'status') {
                 taskState.textStatus = `Aguardando: ${diffMin} min... (Próximo Status)`;
             } else {
-                const nextT = (taskState.data.templates || [])[taskState.cycleIndex % (taskState.data.templates?.length || 1)];
-                taskState.textStatus = `Aguardando: ${diffMin} min... (${nextT ? 'Modelo ' + (taskState.cycleIndex % taskState.data.templates.length + 1) : 'Novo Ciclo'})`;
+                const tArr = taskState.data.templates || [];
+                const nextT = tArr.length > 0 ? tArr[taskState.cycleIndex % tArr.length] : null;
+                taskState.textStatus = `Aguardando: ${diffMin} min... (${nextT ? 'Modelo ' + ((taskState.cycleIndex % tArr.length) + 1) : 'Novo Ciclo'})`;
             }
             
             await broadcastProgress();

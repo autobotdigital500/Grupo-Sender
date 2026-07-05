@@ -1975,9 +1975,11 @@ function setupTemplates() {
       text: text,
       media: [...templateMediaFiles]
     });
-    saveState();
-    renderTemplates();
-    $('btnCancelTemplate').click();
+    chrome.storage.local.set({ templates }, () => {
+      saveState();
+      renderTemplates();
+      $('btnCancelTemplate').click();
+    });
   };
 
   $('btnStartTemplates').onclick = () => {
@@ -2033,8 +2035,10 @@ function renderTemplates() {
     `;
     item.querySelector('button').onclick = () => {
       templates.splice(index, 1);
-      saveState();
-      renderTemplates();
+      chrome.storage.local.set({ templates }, () => {
+        saveState();
+        renderTemplates();
+      });
     };
     list.appendChild(item);
   });
