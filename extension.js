@@ -1975,11 +1975,20 @@ function setupTemplates() {
       text: text,
       media: [...templateMediaFiles]
     });
-    chrome.storage.local.set({ templates }, () => {
+    // Atualiza a UI imediatamente
+    renderTemplates();
+    $('btnCancelTemplate').click();
+    
+    // Tenta salvar de forma assíncrona
+    try {
+      chrome.storage.local.set({ templates }, () => {
+        if (chrome.runtime.lastError) console.error('Erro ao salvar templates:', chrome.runtime.lastError);
+      });
       saveState();
-      renderTemplates();
-      $('btnCancelTemplate').click();
-    });
+    } catch (e) {
+      console.error('Exceção ao salvar templates:', e);
+      saveState(); // Fallback
+    }
   };
 
   $('btnStartTemplates').onclick = () => {
@@ -2035,10 +2044,19 @@ function renderTemplates() {
     `;
     item.querySelector('button').onclick = () => {
       templates.splice(index, 1);
-      chrome.storage.local.set({ templates }, () => {
+      
+      // Atualiza a UI imediatamente
+      renderTemplates();
+      
+      try {
+        chrome.storage.local.set({ templates }, () => {
+          if (chrome.runtime.lastError) console.error('Erro ao excluir template:', chrome.runtime.lastError);
+        });
         saveState();
-        renderTemplates();
-      });
+      } catch (e) {
+        console.error('Exceção ao excluir template:', e);
+        saveState();
+      }
     };
     list.appendChild(item);
   });
