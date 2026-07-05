@@ -279,6 +279,9 @@ function init(io) {
           return;
         }
 
+        // Define a flag global de cancelamento para false
+        global.cancelCampaign = false;
+
         ioInstance.emit('chrome_event', { action: 'taskProgress', state: { running: true, type: 'campaign', progress: 0, total: items.length, textStatus: 'Iniciando...' } });
 
         let progress = 0;
@@ -286,17 +289,25 @@ function init(io) {
 
         (async () => {
           console.log(">>> Entrando no loop de envio de campanha...");
-          for (let i = 0; i < items.length; i++) {
-            const group = items[i];
-            const delayMin = Number(cfg.delayMin) || 5;
-            const delayMax = Number(cfg.delayMax) || 15;
-            const delayMs = Math.floor(Math.random() * (delayMax - delayMin + 1) + delayMin) * 1000;
+          let isRunning = true;
 
-            console.log(`\n📦 Processando ${i+1}/${items.length}: ${group.name}`);
-            console.log(`⏳ Aguardando ${Math.round(delayMs/1000)}s...`);
+          while (isRunning && !global.cancelCampaign) {
+            progress = 0;
+            errors = [];
 
-            const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-            const waitSeconds = Math.round(delayMs / 1000);
+            for (let i = 0; i < items.length; i++) {
+              if (global.cancelCampaign) break;
+
+              const group = items[i];
+              const delayMin = Number(cfg.delayMin) || 5;
+              const delayMax = Number(cfg.delayMax) || 15;
+              const delayMs = Math.floor(Math.random() * (delayMax - delayMin + 1) + delayMin) * 1000;
+
+              console.log(`\n📦 Processando ${i+1}/${items.length}: ${group.name}`);
+              console.log(`⏳ Aguardando ${Math.round(delayMs/1000)}s...`);
+
+              const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+              const waitSeconds = Math.round(delayMs / 1000);
             for (let s = waitSeconds; s > 0; s--) {
               ioInstance.emit('chrome_event', { action: 'taskProgress', state: { running: true, type: 'campaign', progress, total: items.length, textStatus: `Aguardando ${s}s para enviar para ${group.name}...` } });
               await sleep(1000);
@@ -312,10 +323,9 @@ function init(io) {
               let mediaArray = [];
 
               if (isTemplateCycle && templates.length > 0) {
-                const t = templates[payload.cycleIndex % templates.length];
+                const t = templates[(payload.cycleIndex || 0) % templates.length];
                 text = t.text || '';
                 mediaArray = Array.isArray(t.media) ? t.media : (t.media ? [t.media] : []);
-                payload.cycleIndex++; // Incrementa para a próxima mensagem
               } else {
                 const variation = variations[Math.floor(Math.random() * variations.length)];
                 if (!variation && variations.length > 0) continue;
@@ -363,9 +373,52 @@ function init(io) {
             }
           }
 
+          if (global.cancelCampaign) {
+            console.log(">>> CAMPANHA CANCELADA PELO USUÁRIO!");
+            ioInstance.emit('chrome_event', { action: 'taskProgress', state: { running: false, type: 'campaign', progress, total: items.length, textStatus: 'Cancelado', errors } });
+            return;
+          }
+
+          if (payload.repeatCampaign && !global.cancelCampaign) {
+            payload.cycleIndex = (payload.cycleIndex || 0) + 1;
+            const intervalMin = parseInt(payload.repeatInterval) || 60;
+            console.log(`>>> Iniciando espera de ${intervalMin} minutos para o próximo ciclo...`);
+            
+            let totalSecs = intervalMin * 60;
+            for (let c = totalSecs; c > 0; c--) {
+              if (global.cancelCampaign) break;
+              
+              const diffMin = Math.ceil(c / 60);
+              const tArr = payload.templates || [];
+              const nextT = tArr.length > 0 ? tArr[payload.cycleIndex % tArr.length] : null;
+              const textStatus = `Aguardando: ${diffMin} min... (${nextT ? 'Modelo ' + ((payload.cycleIndex % tArr.length) + 1) : 'Novo Ciclo'})`;
+              
+              ioInstance.emit('chrome_event', { action: 'taskProgress', state: { running: true, type: 'campaign', progress: items.length, total: items.length, textStatus } });
+              await new Promise(r => setTimeout(r, 1000));
+            }
+            if (!global.cancelCampaign) {
+               console.log(">>> Reiniciando ciclo de campanha!");
+            } else {
+               isRunning = false;
+            }
+          } else {
+            isRunning = false;
+          }
+        }
+
+        if (global.cancelCampaign) {
+          console.log(">>> CAMPANHA CANCELADA!");
+          ioInstance.emit('chrome_event', { action: 'taskProgress', state: { running: false, type: 'campaign', progress, total: items.length, textStatus: 'Cancelado', errors } });
+        } else {
           console.log(">>> CAMPANHA FINALIZADA!");
           ioInstance.emit('chrome_event', { action: 'taskProgress', state: { running: false, type: 'campaign', progress, total: items.length, textStatus: 'Finalizado', errors } });
+        }
         })();
+      }
+      else if (msg.action === 'taskStop') {
+        console.log(">>> Comando de PARAR recebido do front-end!");
+        global.cancelCampaign = true;
+        if (callback) callback({ success: true });
       }
       else if (msg.action === 'getGroups') {
         try {
