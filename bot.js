@@ -273,7 +273,7 @@ function init(io) {
         const variations = payload.variations || [];
         const cfg = payload.cfg || { delayMin: 5, delayMax: 15 };
 
-        if (!sock || currentConnectionState !== 'CONNECTED') {
+        if (!sock || !sock.user) {
           console.log(">>> ERRO: WhatsApp não está conectado (Aguardando QR Code)!");
           socket.emit('chrome_event', { action: 'taskProgress', state: { running: false, type: 'campaign', textStatus: 'Erro: Escaneie o QR Code primeiro!', errors: ['Desconectado'] } });
           return;
@@ -292,12 +292,14 @@ function init(io) {
             const delayMax = Number(cfg.delayMax) || 15;
             const delayMs = Math.floor(Math.random() * (delayMax - delayMin + 1) + delayMin) * 1000;
 
-            console.log(`>>> Preparando para enviar para ${group.name} (Aguardando ${delayMs}ms)`);
+            console.log(`\n📦 Processando ${i+1}/${items.length}: ${group.name}`);
+            console.log(`⏳ Aguardando ${Math.round(delayMs/1000)}s...`);
 
+            const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
             const waitSeconds = Math.round(delayMs / 1000);
             for (let s = waitSeconds; s > 0; s--) {
-              socket.emit('chrome_event', { action: 'taskProgress', state: { running: true, type: 'campaign', progress, total: items.length, textStatus: `Aguardando ${s}s...` } });
-              await delay(1000);
+              socket.emit('chrome_event', { action: 'taskProgress', state: { running: true, type: 'campaign', progress, total: items.length, textStatus: `Aguardando ${s}s para enviar para ${group.name}...` } });
+              await sleep(1000);
             }
 
             try {
