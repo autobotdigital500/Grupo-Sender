@@ -978,6 +978,15 @@
   <script>
     // ── MOCK DO CHROME API PARA O FRONTEND NÃO CRASHAR ──
     const socket = io();
+    const gcrmDbPromise = new Promise((resolve, reject) => {
+      const request = indexedDB.open('gcrm_db', 1);
+      request.onupgradeneeded = (e) => {
+        e.target.result.createObjectStore('storage');
+      };
+      request.onsuccess = (e) => resolve(e.target.result);
+      request.onerror = (e) => reject(e);
+    });
+
     window.chrome = {
       runtime: {
         sendMessage: function(msg, callback) {
@@ -997,24 +1006,64 @@
       storage: {
         local: {
           get: function(keys, callback) {
-            let result = {};
-            if (Array.isArray(keys)) {
+            gcrmDbPromise.then(db => {
+              const tx = db.transaction('storage', 'readonly');
+              const store = tx.objectStore('storage');
+              let result = {};
+              if (!Array.isArray(keys)) return callback && callback(result);
+              let pending = keys.length;
+              if (pending === 0) return callback && callback(result);
               keys.forEach(k => {
-                let val = localStorage.getItem('gcrm_' + k);
-                if (val) {
-                  try { result[k] = JSON.parse(val); } catch(e) { result[k] = val; }
-                }
+                const req = store.get('gcrm_' + k);
+                req.onsuccess = () => {
+                  if (req.result !== undefined) {
+                    result[k] = req.result;
+                  } else {
+                    let val = localStorage.getItem('gcrm_' + k);
+                    if (val) {
+                      try { result[k] = JSON.parse(val); } catch(e) { result[k] = val; }
+                    }
+                  }
+                  pending--;
+                  if (pending === 0 && callback) callback(result);
+                };
+                req.onerror = () => {
+                  pending--;
+                  if (pending === 0 && callback) callback(result);
+                };
               });
-            }
-            if (callback) callback(result);
+            }).catch(() => {
+              let result = {};
+              if (Array.isArray(keys)) {
+                keys.forEach(k => {
+                  let val = localStorage.getItem('gcrm_' + k);
+                  if (val) {
+                    try { result[k] = JSON.parse(val); } catch(e) { result[k] = val; }
+                  }
+                });
+              }
+              if (callback) callback(result);
+            });
           },
           set: function(obj, callback) {
-            if (typeof obj === 'object') {
-              Object.keys(obj).forEach(k => {
-                localStorage.setItem('gcrm_' + k, JSON.stringify(obj[k]));
-              });
-            }
-            if (callback) callback();
+            gcrmDbPromise.then(db => {
+              const tx = db.transaction('storage', 'readwrite');
+              const store = tx.objectStore('storage');
+              if (typeof obj === 'object') {
+                Object.keys(obj).forEach(k => {
+                  store.put(obj[k], 'gcrm_' + k);
+                });
+              }
+              tx.oncomplete = () => { if (callback) callback(); };
+              tx.onerror = () => { if (callback) callback(); };
+            }).catch(() => {
+              if (typeof obj === 'object') {
+                Object.keys(obj).forEach(k => {
+                  try { localStorage.setItem('gcrm_' + k, JSON.stringify(obj[k])); } catch(e){}
+                });
+              }
+              if (callback) callback();
+            });
           }
         }
       },
