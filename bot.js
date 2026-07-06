@@ -427,7 +427,8 @@ function init(io) {
           const list = Object.values(groups).map(g => ({
             id: g.id,
             name: g.subject || 'Grupo',
-            participants: (g.participants || []).length,
+            memberCount: (g.participants || []).length,
+            isClosed: g.announce === true,
             isCreator: g.owner ? g.owner === sock.user?.id?.split(':')[0] + '@s.whatsapp.net' : false
           }));
           if (callback) callback({ groups: list });
