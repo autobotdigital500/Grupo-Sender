@@ -13,7 +13,7 @@ RUN npm install
 COPY . .
 
 # Como você envia os arquivos soltos pelo site, precisamos colocar nas pastas certas lá dentro
-RUN mkdir -p src public && mv api.js bot.js src/ 2>/dev/null || true && mv index.html style.css logo.png extension.html extension.js public/ 2>/dev/null || true
+RUN mkdir -p src public && mv api.js bot.js src/ 2>/dev/null || true && mv index.html style.css logo.png extension.html extension.js license.js public/ 2>/dev/null || true
 
 # Expor a porta
 EXPOSE 3000
