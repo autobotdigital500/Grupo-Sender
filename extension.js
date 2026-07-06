@@ -219,6 +219,22 @@ function setupGroups() {
     });
   });
 
+  safeClick('btnSaveGroups', () => {
+    saveState();
+    const btn = $('btnSaveGroups');
+    if (btn) {
+      const oldText = btn.textContent;
+      btn.textContent = 'Salvo!';
+      btn.style.backgroundColor = '#10b981';
+      btn.style.color = '#fff';
+      setTimeout(() => {
+        btn.textContent = oldText;
+        btn.style.backgroundColor = '';
+        btn.style.color = '';
+      }, 2000);
+    }
+  });
+
   safeClick('btnClearSelection', () => {
     const boxes = document.querySelectorAll('.group-check');
     boxes.forEach(b => {
@@ -1342,6 +1358,22 @@ function setupCampaign() {
     };
   }
 
+  safeClick('btnSaveTemplateInterval', () => {
+    saveState();
+    const btn = $('btnSaveTemplateInterval');
+    if (btn) {
+      const oldText = btn.textContent;
+      btn.textContent = 'Salvo!';
+      btn.style.backgroundColor = '#10b981';
+      btn.style.color = '#fff';
+      setTimeout(() => {
+        btn.textContent = oldText;
+        btn.style.backgroundColor = '';
+        btn.style.color = '';
+      }, 2000);
+    }
+  });
+
   // Variacoes
   $('btnAddVariation').onclick = () => {
     if (variations.length >= 5) return alert('Máximo de 5 variações permitidas.');
@@ -1440,6 +1472,8 @@ function startCampaign(cycleIndex = 0) {
     selected.clear();
     openGroups.forEach(g => selected.add(g.id));
   }
+
+
 
   const isTemplateCycle = $('repeatCampaignToggle').checked && useTemplatesCycle && templates.length > 0;
   if (!isTemplateCycle) {
