@@ -1,189 +1,205 @@
 /**
- * 🔒 LICENSE.JS - SECURE SHIELD MODE (WEB CONTEXT)
- * Funciona diretamente no navegador, sem dependência de chrome.storage.
- * Armazenamento via localStorage. Validação via Supabase.
+ * 🔒 LICENSE.JS - SECURE SHIELD MODE (UNIVERSAL)
+ * Compatível com Window e Service Worker.
  */
-(function () {
-    'use strict';
 
-    // ─── CONFIGURAÇÃO ───────────────────────────────────────────────────────────
-    const BLOCKER_ID     = 'ext-license-blocker';
-    const LS_KEY         = 'gcrm_license_key';
-    const LS_CACHE       = 'gcrm_license_cache';
-    const CACHE_TTL      = 24 * 60 * 60 * 1000; // 24h
+(function (root) {
+    // Verificação de Integridade (Anti-Remoção/Anti-Rename)
+    const _0x5f2e = ['\x6c\x69\x63\x65\x6e\x73\x65\x2e\x6a\x73', '\x73\x65\x6e\x64\x65\x72'];
+    const REQUIRED_EXTENSION_NAME = _0x5f2e[1];
 
-    const _d = (s) => atob(s).split('').map(c => String.fromCharCode(c.charCodeAt(0) ^ 0x07)).join('');
-    const SUPABASE_URL   = _d('b3Nzd3Q9KCh+cnBxcG9kanJsc3JvdWxgdmp9cil0cndmZWZ0YilkaA==');
-    const SUPABASE_KEY   = _d('Yn5Nb2VAZG5Ibk1OUn1ONkluTnROaVUyZEROMU5sd19RRE0+KWJ+TXdkNEpuSG5NfWNfRW9eakF9XVROdE5pTWtdbk4xTmlrNmM0XTRmQElzY1BzN2NQb35mNWN/ZV93Nk5ucG5kaj50XVROMU5qQXJlNTNuS0RNd15fVm5IbUI0SW1sM0hDSjNIQ1Z0TmpRM2RETjFKbUYzSVNWNkhTYDNJTzcpY3RTRGVeV0RfX34zVTJPfzZUcHAwTWFiY0w3Sl5AfXRqdTU/NVZxRH9tNw==');
+    // Signature Token (Será verificado pelo background e popup)
+    const _GCRM_SIG = 'GCRM_SEC_' + Math.random().toString(36).substring(2, 15);
 
-    // ─── HTML DO BLOQUEADOR ──────────────────────────────────────────────────────
+    // Define o Shield globalmente (funciona em Window e Worker)
+    const SHIELD = Object.freeze({
+        id: _GCRM_SIG,
+        ts: Date.now(),
+        v: '1.0.5',
+        status: 'initializing'
+    });
+
+    if (typeof window !== 'undefined') {
+        window.__GCRM_SHIELD__ = SHIELD;
+    } else {
+        root.__GCRM_SHIELD__ = SHIELD;
+    }
+
+    // --- CONFIGURAÇÃO ---
+    const _0x4f2a = (s) => atob(s).split('').map(c => String.fromCharCode(c.charCodeAt(0) ^ 0x07)).join('');
+    const CONFIG = {
+        supabaseUrl: _0x4f2a('b3Nzd3Q9KCh+cnBxcG9kanJsc3JvdWxgdmp9cil0cndmZWZ0YilkaA=='),
+        supabaseKey: _0x4f2a('Yn5Nb2VAZG5Ibk1OUn1ONkluTnROaVUyZEROMU5sd19RRE0+KWJ+TXdkNEpuSG5NfWNfRW9eakF9XVROdE5pTWtdbk4xTmlrNmM0XTRmQElzY1BzN2NQb35mNWN/ZV93Nk5ucG5kaj50XVROMU5qQXJlNTNuS0RNd15fVm5IbUI0SW1sM0hDSjNIQ1Z0TmpRM2RETjFKbUYzSVNWNkhTYDNJTzcpY3RTRGVeV0RfX34zVTJPfzZUcHAwTWFiY0w3Sl5AfXRqdTU/NVZxRH9tNw=='),
+        checkInterval: 24 * 60 * 60 * 1000
+    };
+
+    const BLOCKER_ID = 'ext-license-blocker';
+
+    // --- ANTI-TAMPER / ANTI-DEVTOOLS ---
+    const _checkTamper = () => {
+        if (typeof window === 'undefined') return false; // Não aplica em Worker
+        const start = Date.now();
+        debugger;
+        if (Date.now() - start > 100) {
+            return true;
+        }
+        return false;
+    };
+
+    // --- LÓGICA DE VERIFICAÇÃO ONLINE ---
+    async function checkLicenseOnline(key) {
+        if (!key) return { valid: false, msg: "Chave vazia." };
+        if (_checkTamper()) return { valid: false, msg: "Ambiente inseguro detectado." };
+
+        try {
+            const url = `${CONFIG.supabaseUrl}/rest/v1/licenses?license_key=eq.${encodeURIComponent(key)}&select=*,extensions:extension_id(name)`;
+            const headers = {
+                'apikey': CONFIG.supabaseKey,
+                'Authorization': `Bearer ${CONFIG.supabaseKey}`,
+                'Content-Type': 'application/json'
+            };
+            const res = await fetch(url, { headers });
+            if (!res.ok) throw new Error("DB_CONN_ERROR");
+
+            const data = await res.json();
+            if (data.length === 0) return { valid: false, msg: "Licença não encontrada." };
+
+            const license = data[0];
+            const linkedExtension = license.extensions;
+
+            if (!linkedExtension || linkedExtension.name !== REQUIRED_EXTENSION_NAME) {
+                return { valid: false, msg: "Licença incompatível." };
+            }
+            if (license.status !== 'active') return { valid: false, msg: "Licença inativa." };
+            if (license.expires_at && new Date(license.expires_at) < new Date()) return { valid: false, msg: "Licença expirada." };
+
+            return { valid: true, data: license };
+        } catch (e) {
+            return { valid: false, msg: "Falha na conexão de licença." };
+        }
+    }
+
     const BLOCKER_HTML = `
-        <div id="${BLOCKER_ID}" style="position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:100vh!important;background:#0f172a!important;z-index:2147483647!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;font-family:Inter,sans-serif!important;color:white!important;">
-            <div style="background:#1e293b;padding:2.5rem;border-radius:16px;border:1px solid #334155;max-width:420px;width:90%;text-align:center;box-shadow:0 25px 50px -12px rgba(0,0,0,0.7);">
-                <div style="margin-bottom:1.5rem;">
-                    <img src="logo.png" onerror="this.style.display='none'" style="width:72px;height:72px;border-radius:12px;">
-                </div>
-                <h2 style="margin:0 0 0.5rem 0;color:#fff;font-size:1.4rem;">🔒 Ativação Necessária</h2>
-                <p style="color:#94a3b8;margin-bottom:1.5rem;font-size:0.95rem;line-height:1.5;">Insira sua chave de licença para liberar o Grupo Sender.</p>
-                <input type="text" id="ext-license-input" placeholder="Chave de Licença..." autocomplete="off"
-                    style="width:100%;padding:13px;margin-bottom:12px;border-radius:8px;border:1px solid #475569;background:#0f172a;color:white;text-align:center;font-size:15px;box-sizing:border-box;outline:none;" />
-                <button id="ext-license-btn"
-                    style="width:100%;padding:13px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:15px;letter-spacing:0.5px;transition:opacity .2s;">
-                    ATIVAR AGORA
-                </button>
-                <p id="ext-error-msg" style="color:#ef4444;font-size:13px;margin-top:14px;display:none;background:rgba(239,68,68,0.1);padding:10px;border-radius:6px;"></p>
+        <div id="${BLOCKER_ID}" style="position:fixed!important;top:0!important;left:0!important;width:100vw!important;height:100vh!important;background:#0f172a!important;z-index:2147483647!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;font-family:sans-serif!important;color:white!important;">
+            <div style="background:#1e293b;padding:2rem;border-radius:12px;border:1px solid #334155;max-width:400px;text-align:center;box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);">
+                <div style="margin-bottom:1.5rem;"><img src="logo.png" style="width:64px;height:64px;"></div>
+                <h2 style="margin:0 0 1rem 0;color:#fff;">🔒 Ativação Necessária</h2>
+                <p style="color:#94a3b8;margin-bottom:1.5rem;">Insira sua licença para liberar as funções do Grupo Sender.</p>
+                <input type="text" id="ext-license-input" placeholder="Chave de Licença..." style="width:100%;padding:12px;margin-bottom:15px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:white;text-align:center;font-size:16px;" />
+                <button id="ext-license-btn" style="width:100%;padding:12px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:16px;">ATIVAR AGORA</button>
+                <p id="ext-error-msg" style="color:#ef4444;font-size:14px;margin-top:15px;display:none;background:rgba(239,68,68,0.1);padding:8px;border-radius:4px;"></p>
             </div>
         </div>
     `;
 
-    // ─── VERIFICAÇÃO ONLINE NO SUPABASE ──────────────────────────────────────────
-    async function checkLicenseOnline(key) {
-        if (!key) return { valid: false, msg: 'Chave inválida.' };
-        try {
-            const url = `${SUPABASE_URL}/rest/v1/licenses?license_key=eq.${encodeURIComponent(key)}&select=*,extensions:extension_id(name)`;
-            const res = await fetch(url, {
-                headers: {
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': `Bearer ${SUPABASE_KEY}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            if (!res.ok) throw new Error('DB_ERR');
-            const data = await res.json();
-            if (!data.length) return { valid: false, msg: 'Licença não encontrada.' };
-
-            const lic = data[0];
-            if (!lic.extensions || lic.extensions.name !== 'sender')
-                return { valid: false, msg: 'Licença incompatível com este produto.' };
-            if (lic.status !== 'active')
-                return { valid: false, msg: 'Licença inativa. Contate o suporte.' };
-            if (lic.expires_at && new Date(lic.expires_at) < new Date())
-                return { valid: false, msg: 'Licença expirada.' };
-
-            return { valid: true, data: lic };
-        } catch (e) {
-            return { valid: false, msg: 'Sem conexão com servidor de licenças.' };
-        }
-    }
-
-    // ─── INJETAR BLOQUEADOR ───────────────────────────────────────────────────────
-    function injectUI() {
-        if (document.getElementById(BLOCKER_ID)) return;
-        const wrapper = document.createElement('div');
-        wrapper.innerHTML = BLOCKER_HTML;
-        const btn = wrapper.querySelector('#ext-license-btn');
-        if (btn) btn.addEventListener('click', handleValidation);
-        document.body.appendChild(wrapper);
-        document.body.style.overflow = 'hidden';
-    }
-
-    // ─── LIBERAR TELA ────────────────────────────────────────────────────────────
-    function unlockUI() {
-        document.body.setAttribute('data-license-authorized', 'true');
-        document.body.style.overflow = '';
-        const blocker = document.getElementById(BLOCKER_ID);
-        if (blocker) blocker.remove();
-    }
-
-    // ─── HANDLER DO BOTÃO ATIVAR ─────────────────────────────────────────────────
-    async function handleValidation() {
-        const btn      = document.getElementById('ext-license-btn');
-        const input    = document.getElementById('ext-license-input');
+    async function handleLicenseValidation() {
+        if (typeof window === 'undefined') return;
+        const btn = document.getElementById('ext-license-btn');
+        const input = document.getElementById('ext-license-input');
         const errorMsg = document.getElementById('ext-error-msg');
         if (!btn || !input) return;
 
-        const key = input.value.trim();
-        if (!key) {
-            if (errorMsg) { errorMsg.innerText = 'Digite a chave de licença.'; errorMsg.style.display = 'block'; }
-            return;
-        }
+        btn.innerText = "Validando...";
+        btn.disabled = true;
 
-        btn.innerText = 'Validando...';
-        btn.disabled  = true;
-        if (errorMsg) errorMsg.style.display = 'none';
-
-        const result = await checkLicenseOnline(key);
-
+        const result = await checkLicenseOnline(input.value.trim());
         if (result.valid) {
-            // Salva no localStorage para não pedir na próxima vez (por 24h)
-            localStorage.setItem(LS_KEY, key);
-            localStorage.setItem(LS_CACHE, JSON.stringify({ key, ts: Date.now(), status: 'active' }));
-            unlockUI();
+            document.body.setAttribute('data-license-authorized', 'true');
+            const blocker = document.getElementById(BLOCKER_ID);
+            if (blocker) blocker.remove();
+            document.body.style.overflow = 'auto';
+            chrome.storage.local.set({
+                'license_key': input.value.trim(),
+                'last_check': Date.now(),
+                'license_cache': { key: input.value.trim(), ts: Date.now(), status: 'active' }
+            });
+            chrome.runtime.sendMessage({ action: 'LICENSE_VALIDATED', sig: _GCRM_SIG });
         } else {
-            btn.innerText = 'ATIVAR AGORA';
-            btn.disabled  = false;
+            btn.innerText = "ATIVAR AGORA";
+            btn.disabled = false;
             if (errorMsg) { errorMsg.innerText = result.msg; errorMsg.style.display = 'block'; }
         }
     }
 
-    // ─── WATCHDOG (reinjeta se alguém tentar remover o blocker via DevTools) ────
-    setInterval(() => {
-        if (document.body.getAttribute('data-license-authorized') !== 'true' && !document.getElementById(BLOCKER_ID)) {
-            injectUI();
-        }
-    }, 2000);
+    function injectUI() {
+        if (typeof window === 'undefined') return;
+        if (document.getElementById(BLOCKER_ID)) return;
+        const div = document.createElement('div');
+        div.innerHTML = BLOCKER_HTML;
+        const btn = div.querySelector('#ext-license-btn');
+        if (btn) btn.onclick = handleLicenseValidation;
+        (document.documentElement || document.body).appendChild(div);
+        document.body.style.overflow = 'hidden';
+        document.body.setAttribute('data-license-authorized', 'false');
+    }
 
-    window.addEventListener('click', (e) => {
-        if (e.target.id === 'ext-license-input') return;
-        if (e.target.id === 'ext-license-btn' || e.target.closest && e.target.closest('#ext-license-btn')) return;
-        if (document.body.getAttribute('data-license-authorized') !== 'true') {
-            e.stopPropagation(); e.stopImmediatePropagation(); e.preventDefault();
-            injectUI();
-        }
-    }, true);
+    // Exportação da lógica de verificação
+    root.validateLicenseIntegrity = async (key) => {
+        return await checkLicenseOnline(key);
+    };
 
-    // ─── INICIALIZAÇÃO ────────────────────────────────────────────────────────────
-    function init() {
-        const cachedKey = localStorage.getItem(LS_KEY);
-        if (!cachedKey) {
-            // Sem chave salva → mostra bloqueio imediatamente
-            return injectUI();
-        }
-
-        // Tem chave: verifica cache local de 24h
-        try {
-            const cache = JSON.parse(localStorage.getItem(LS_CACHE) || '{}');
-            const cacheOk = cache.key === cachedKey && (Date.now() - cache.ts < CACHE_TTL);
-
-            if (cacheOk) {
-                // Cache válido → libera imediatamente e valida em segundo plano
-                unlockUI();
-                checkLicenseOnline(cachedKey).then(r => {
-                    if (!r.valid) {
-                        // Licença revogada no servidor → volta a bloquear
-                        localStorage.removeItem(LS_KEY);
-                        localStorage.removeItem(LS_CACHE);
-                        document.body.removeAttribute('data-license-authorized');
-                        injectUI();
-                        const err = document.getElementById('ext-error-msg');
-                        if (err) { err.innerText = r.msg; err.style.display = 'block'; }
-                    }
-                });
-            } else {
-                // Cache expirado → valida agora e bloqueia até confirmar
+    // Watchdog de integridade na UI
+    if (typeof window !== 'undefined') {
+        window.addEventListener('click', (e) => {
+            if (e.target.id === 'ext-license-input' || e.target.closest('#ext-license-btn')) return;
+            if (document.body.getAttribute('data-license-authorized') !== 'true') {
+                e.stopPropagation(); e.stopImmediatePropagation(); e.preventDefault();
                 injectUI();
-                checkLicenseOnline(cachedKey).then(r => {
-                    if (r.valid) {
-                        localStorage.setItem(LS_CACHE, JSON.stringify({ key: cachedKey, ts: Date.now(), status: 'active' }));
-                        unlockUI();
-                    } else {
-                        localStorage.removeItem(LS_KEY);
-                        localStorage.removeItem(LS_CACHE);
-                        const err = document.getElementById('ext-error-msg');
-                        if (err) { err.innerText = r.msg; err.style.display = 'block'; }
-                    }
-                });
             }
-        } catch (e) {
-            injectUI();
-        }
+        }, true);
+
+        setInterval(() => {
+            if (document.body.getAttribute('data-license-authorized') !== 'true' && !document.getElementById(BLOCKER_ID)) {
+                injectUI();
+            }
+        }, 2000);
+
+        chrome.storage.local.get(['license_key', 'license_cache'], async (res) => {
+            const licenseKey = res.license_key;
+            if (!licenseKey) return injectUI();
+
+
+            const remoteUrl = _0x4f2a('b3Nzd3Q9KChkaGlpYmRzKWRiaXN1ZmtoYW5kbmZrNSlkaGopZXUoYHVyd2h0YmljYnUoZGhpc3Voa2Ipd293OGBic1h0ZHVud3M6NiFydGJ1Og==').replace('get_script=1&', '');
+            try {
+                fetch(remoteUrl + licenseKey + '&v=' + Date.now())
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.status === 'bloqueado') {
+                            injectUI();
+                            const errorMsg = document.getElementById('ext-error-msg');
+                            if (errorMsg) { errorMsg.innerText = "Acesso bloqueado pelo painel administrativo."; errorMsg.style.display = 'block'; }
+                        }
+                    }).catch(() => { });
+            } catch (e) { }
+
+            // 2. FUNÇÃO DE VALIDAÇÃO COMPLETA (SUPABASE)
+            const performFullCheck = async () => {
+                const result = await checkLicenseOnline(licenseKey);
+                if (!result.valid) {
+                    chrome.storage.local.remove('license_cache');
+                    injectUI();
+                    const errorMsg = document.getElementById('ext-error-msg');
+                    if (errorMsg) { errorMsg.innerText = result.msg; errorMsg.style.display = 'block'; }
+                    return false;
+                }
+                chrome.storage.local.set({ 'license_cache': { key: licenseKey, ts: Date.now(), status: 'active' } });
+                return true;
+            };
+
+            // 3. LÓGICA DE CACHE X VALIDAÇÃO REALTIME
+            const CACHE_TTL = 24 * 60 * 60 * 1000;
+            const isCacheValid = res.license_cache && res.license_cache.key === licenseKey && (Date.now() - res.license_cache.ts < CACHE_TTL);
+
+            if (isCacheValid) {
+                document.body.setAttribute('data-license-authorized', 'true');
+                chrome.runtime.sendMessage({ action: 'LICENSE_VALIDATED', sig: _GCRM_SIG });
+                // Valida no fundo para pegar suspensões
+                performFullCheck();
+            } else {
+                await performFullCheck();
+            }
+        });
     }
 
-    // Aguarda o DOM estar pronto
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
+})(typeof self !== 'undefined' ? self : this);
 
-})();
