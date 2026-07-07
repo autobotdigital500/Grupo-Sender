@@ -1251,7 +1251,7 @@ try {
             taskState.textStatus = `Enviando ${i + 1}/${items.length} para ${g.name}...`;
             await broadcastProgress();
 
-            const finalMsg = (vText || '').replace(/{nome_grupo}/g, g.name).replace(/{data}/g, new Date().toLocaleDateString());
+            const finalMsg = (vText || '').replace(/{nome_grupo}/g, g.name).replace(/{nome}/g, g.name).replace(/{data}/g, new Date().toLocaleDateString());
             const sig = cfg?.signature ? `\n\n${cfg.signature}` : '';
             const fullText = finalMsg + sig;
 
