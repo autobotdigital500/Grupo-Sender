@@ -51,7 +51,7 @@
         if (_checkTamper()) return { valid: false, msg: "Ambiente inseguro detectado." };
 
         try {
-            const url = `${CONFIG.supabaseUrl}/rest/v1/licenses?license_key=eq.${encodeURIComponent(key)}&select=*,extensions:extension_id(name)&_t=${Date.now()}`;
+            const url = `${CONFIG.supabaseUrl}/rest/v1/licenses?license_key=eq.${encodeURIComponent(key)}&select=*,extensions:extension_id(name)`;
             const headers = {
                 'apikey': CONFIG.supabaseKey,
                 'Authorization': `Bearer ${CONFIG.supabaseKey}`,
