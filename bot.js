@@ -309,9 +309,11 @@ function init(io) {
               const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
               const waitSeconds = Math.round(delayMs / 1000);
             for (let s = waitSeconds; s > 0; s--) {
+              if (global.cancelCampaign) break;
               ioInstance.emit('chrome_event', { action: 'taskProgress', state: { running: true, type: 'campaign', progress, total: items.length, textStatus: `Aguardando ${s}s para enviar para ${group.name}...` } });
               await sleep(1000);
             }
+            if (global.cancelCampaign) break;
 
             try {
               console.log(`>>> Enviando mensagem para ${group.name}...`);
