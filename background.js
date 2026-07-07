@@ -291,6 +291,18 @@ try {
             try {
                 if (window.WPP?.chat?.sendTextMessage) {
                     let options = { createChat: true, waitForAck: true };
+                    
+                    // TRUQUE: Forçar contato para a memória
+                    if (groupId.includes('@c.us')) {
+                        try {
+                            const exists = await window.WPP.contact.queryExists(groupId);
+                            if (exists?.wid?._serialized) {
+                                groupId = exists.wid._serialized;
+                                await window.WPP.contact.get(groupId).catch(() => {});
+                            }
+                        } catch(e) {}
+                    }
+                    
                     const safeText = (text || '');
                     if (mentionAll || safeText.includes('@everyone')) {
                         try {
@@ -312,6 +324,17 @@ try {
         sendFile: async (groupId, fileBase64, mimeType, filename, caption, mentionAll) => {
             try {
                 if (window.WPP?.chat?.sendFileMessage) {
+                    // TRUQUE: Forçar contato para a memória
+                    if (groupId.includes('@c.us')) {
+                        try {
+                            const exists = await window.WPP.contact.queryExists(groupId);
+                            if (exists?.wid?._serialized) {
+                                groupId = exists.wid._serialized;
+                                await window.WPP.contact.get(groupId).catch(() => {});
+                            }
+                        } catch(e) {}
+                    }
+
                     const options = { type: mimeType.startsWith('image') ? 'image' : (mimeType.startsWith('video') ? 'video' : 'document'), filename, createChat: true, waitForAck: true, caption: caption || '' };
                     const safeCaption = (options.caption || '');
                     if (mentionAll || safeCaption.includes('@everyone')) {
