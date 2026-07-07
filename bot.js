@@ -335,13 +335,19 @@ function init(io) {
                 mediaArray = variation ? (Array.isArray(variation.media) ? variation.media : (variation.media ? [variation.media] : [])) : [];
               }
 
+              let targetId = group.id;
+              if (targetId.includes('@c.us')) {
+                targetId = targetId.replace('@c.us', '@s.whatsapp.net');
+              }
+
               text = text.replace(/{nome_grupo}/g, group.name || 'Grupo');
+              text = text.replace(/{nome}/g, group.name || 'Contato');
               text = sanitizeMessage(text);
 
               let mentions = [];
-              if (payload.mentionAll) {
+              if (payload.mentionAll && targetId.includes('@g.us')) {
                 try {
-                  const meta = await sock.groupMetadata(group.id);
+                  const meta = await sock.groupMetadata(targetId);
                   mentions = meta.participants.map(p => p.id);
                   if (!text.includes('@everyone')) text += '\n\n' + mentions.map(m => `@${m.split('@')[0]}`).join(' ');
                 } catch (e) {
@@ -356,16 +362,16 @@ function init(io) {
                 console.log(`>>> Enviando MÍDIA (${media.type}) para ${group.name}`);
 
                 if (media.type.startsWith('image/')) {
-                  await sock.sendMessage(group.id, { image: buffer, caption: text, mentions });
+                  await sock.sendMessage(targetId, { image: buffer, caption: text, mentions });
                 } else if (media.type.startsWith('video/')) {
-                  await sock.sendMessage(group.id, { video: buffer, caption: text, mentions });
+                  await sock.sendMessage(targetId, { video: buffer, caption: text, mentions });
                 } else {
-                  await sock.sendMessage(group.id, { document: buffer, mimetype: media.type, fileName: media.name, caption: text, mentions });
+                  await sock.sendMessage(targetId, { document: buffer, mimetype: media.type, fileName: media.name, caption: text, mentions });
                 }
               } else {
                 if (!text) throw new Error("A mensagem de texto não pode estar vazia.");
                 console.log(`>>> Enviando TEXTO para ${group.name}`);
-                await sock.sendMessage(group.id, { text, mentions });
+                await sock.sendMessage(targetId, { text, mentions });
               }
               console.log(`>>> Sucesso ao enviar para ${group.name}!`);
               progress++;
