@@ -62,6 +62,7 @@ let autoSettings = {
 };
 let autoSelectedGroups = new Set();
 let saveTimeout = null;
+let customContactsList = [];
 
 
 
@@ -1332,7 +1333,7 @@ chrome.runtime.onMessage.addListener((msg) => {
 
 // ── CAMPAIGN ─────────────────────────────────────────────────────────────────
 function setupCampaign() {
-  $('btnStart').onclick = startCampaign;
+  $('btnStart').onclick = () => startCampaign();
   $('btnPause').onclick = () => {
     const nowPaused = $('btnPause').textContent !== 'Continuar';
     $('btnPause').textContent = nowPaused ? 'Continuar' : 'Pausar';
@@ -1343,6 +1344,58 @@ function setupCampaign() {
       chrome.runtime.sendMessage({ action: 'taskStop' });
     }
   };
+
+  // Target selection logic
+  document.querySelectorAll('input[name="campaignTarget"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      const el = $('contactsTargetArea');
+      if (el) el.style.display = e.target.value === 'contacts' ? 'flex' : 'none';
+    });
+  });
+
+  if ($('btnUploadContactsCsv')) {
+    $('btnUploadContactsCsv').onclick = () => {
+      if ($('fileInputContacts')) $('fileInputContacts').click();
+    };
+  }
+
+  if ($('fileInputContacts')) {
+    $('fileInputContacts').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const text = ev.target.result;
+        const rows = text.split(/\r?\n/);
+        let count = 0;
+        let pastedText = $('contactsList').value || '';
+        if (pastedText && !pastedText.endsWith('\n')) pastedText += '\n';
+
+        rows.forEach(row => {
+          if (!row.trim()) return;
+          let parts = row.split(/,|;/);
+          if (parts.length >= 2) {
+            let name = parts[0].trim();
+            let num = parts[1].trim();
+            pastedText += `${name},${num}\n`;
+            count++;
+          } else if (parts.length === 1) {
+            pastedText += `${parts[0].trim()}\n`;
+            count++;
+          }
+        });
+        $('contactsList').value = pastedText;
+        parseContacts();
+        alert(`${count} contatos importados do CSV!`);
+      };
+      reader.readAsText(file);
+      e.target.value = ''; // reset
+    });
+  }
+
+  if ($('contactsList')) {
+    $('contactsList').addEventListener('input', parseContacts);
+  }
 
   $('repeatCampaignToggle').onchange = (e) => {
     $('repeatConfig').style.display = e.target.checked ? 'block' : 'none';
@@ -1445,32 +1498,76 @@ function switchVariation(index) {
   renderVariationTabs();
 }
 
+function parseContacts() {
+  const text = $('contactsList').value;
+  customContactsList = [];
+  
+  const lines = text.split(/\r?\n/);
+  lines.forEach(line => {
+    line = line.trim();
+    if (!line) return;
+    
+    if (line.includes(',') || line.includes(';')) {
+      const parts = line.split(/,|;/);
+      const name = parts[0].trim();
+      const numStr = parts[1] ? parts[1].replace(/[^\d]/g, '') : '';
+      if (numStr.length >= 8) customContactsList.push({ id: numStr + '@c.us', name: name || numStr });
+    } else {
+      const chunks = line.split(/[\s\t]+/);
+      chunks.forEach(chunk => {
+        const clean = chunk.replace(/[^\d]/g, '');
+        if (clean.length >= 8) {
+           customContactsList.push({ id: clean + '@c.us', name: clean });
+        }
+      });
+    }
+  });
+  
+  if ($('contactsCountTxt')) {
+    $('contactsCountTxt').textContent = `${customContactsList.length} contatos válidos inseridos`;
+  }
+}
+
 
 
 function startCampaign(cycleIndex = 0) {
-  const groupsToEnv = allGroups.filter(g => selected.has(g.id));
-  if (!groupsToEnv.length) return alert('Selecione pelo menos um grupo!');
+  let targetType = 'groups';
+  const targetRadio = document.querySelector('input[name="campaignTarget"]:checked');
+  if (targetRadio) targetType = targetRadio.value;
 
-  // Aviso de grupos fechados
-  const closedGroups = groupsToEnv.filter(g => g.isClosed);
-  if (closedGroups.length > 0) {
-    const openGroups = groupsToEnv.filter(g => !g.isClosed);
-    const msg = `⚠️ Atenção: ${closedGroups.length} grupo(s) selecionado(s) estão FECHADOS (somente admins):\n\n` +
-      closedGroups.slice(0, 5).map(g => `🔒 ${g.name}`).join('\n') +
-      (closedGroups.length > 5 ? `\n... e mais ${closedGroups.length - 5}` : '') +
-      `\n\nO envio vai falhar nesses grupos.\n\n` +
-      (openGroups.length > 0
-        ? `Deseja enviar apenas nos ${openGroups.length} grupo(s) abertos?`
-        : `Todos os grupos estão fechados. Não há como enviar.`);
+  let itemsToEnv = [];
+  
+  if (targetType === 'contacts') {
+    if (customContactsList.length === 0) return alert('Insira pelo menos um contato válido na lista!');
+    itemsToEnv = [...customContactsList];
+  } else {
+    const groupsToEnv = allGroups.filter(g => selected.has(g.id));
+    if (!groupsToEnv.length) return alert('Selecione pelo menos um grupo!');
 
-    if (openGroups.length === 0) return alert(msg);
+    // Aviso de grupos fechados
+    const closedGroups = groupsToEnv.filter(g => g.isClosed);
+    if (closedGroups.length > 0) {
+      const openGroups = groupsToEnv.filter(g => !g.isClosed);
+      const msg = `⚠️ Atenção: ${closedGroups.length} grupo(s) selecionado(s) estão FECHADOS (somente admins):\n\n` +
+        closedGroups.slice(0, 5).map(g => `🔒 ${g.name}`).join('\n') +
+        (closedGroups.length > 5 ? `\n... e mais ${closedGroups.length - 5}` : '') +
+        `\n\nO envio vai falhar nesses grupos.\n\n` +
+        (openGroups.length > 0
+          ? `Deseja enviar apenas nos ${openGroups.length} grupo(s) abertos?`
+          : `Todos os grupos estão fechados. Não há como enviar.`);
 
-    const choice = confirm(msg);
-    if (!choice) return; // cancelou
+      if (openGroups.length === 0) return alert(msg);
 
-    // Remove grupos fechados da seleção temporariamente
-    selected.clear();
-    openGroups.forEach(g => selected.add(g.id));
+      const choice = confirm(msg);
+      if (!choice) return; // cancelou
+
+      // Remove grupos fechados da seleção temporariamente
+      selected.clear();
+      openGroups.forEach(g => selected.add(g.id));
+      itemsToEnv = openGroups.map(g => ({ id: g.id, name: g.name }));
+    } else {
+      itemsToEnv = groupsToEnv.map(g => ({ id: g.id, name: g.name }));
+    }
   }
 
 
@@ -1509,7 +1606,7 @@ function startCampaign(cycleIndex = 0) {
   const isExtension = !!(chrome.runtime && chrome.runtime.id);
   const payload = {
     type: 'campaign',
-    items: groupsToEnv.map(g => ({ id: g.id, name: g.name })),
+    items: itemsToEnv,
     isTemplateCycle,
     cfg,
     mentionAll: $('mentionMembersToggle').checked,
